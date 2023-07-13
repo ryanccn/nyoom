@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/otiai10/copy"
 	"github.com/ryanccn/nyoom/config"
 	"github.com/ryanccn/nyoom/utils"
 )
@@ -18,6 +19,7 @@ func Switch(chrome config.Userchrome, profile string) {
 	}
 
 	fmt.Println("Cloning repository")
+
 	cloneCmd := exec.Command("git", "clone", "--depth=1", chrome.CloneURL, tempDir)
 	err = cloneCmd.Run()
 	if err != nil {
@@ -32,7 +34,12 @@ func Switch(chrome config.Userchrome, profile string) {
 	}
 	os.Mkdir(newChromeDir, 0755)
 
-	err = utils.CopyDirectory(path.Join(tempDir, "chrome"), newChromeDir)
+	err = copy.Copy(path.Join(tempDir, "chrome"), newChromeDir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = os.RemoveAll(tempDir)
 	if err != nil {
 		log.Fatalln(err)
 	}
