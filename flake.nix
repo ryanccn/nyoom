@@ -18,55 +18,54 @@
         "aarch64-darwin"
       ];
 
-      packageFn = pkgs:
-        let
-          inherit (pkgs.lib) licenses maintainers;
-        in
-        {
-          nyoom = pkgs.buildGoModule rec {
-            pname = "nyoom";
-            inherit version;
-
-            src = builtins.path {
-              name = "${pname}-src";
-              path = ./.;
-            };
-
-            vendorHash = "sha256-4Wke/nlkF+NP+dZpPdXb35YfPk5Jsn7Oauyb4iitnGk=";
-
-            meta = {
-              description = "A small CLI Firefox userchrome manager";
-              homepage = "https://github.com/ryanccn/${pname}";
-              license = licenses.gpl3;
-              maintainers = [{
-                name = "Ryan Cao";
-                email = "hello@ryanccn.dev";
-              }];
-            };
-          };
-        };
-
       forAllSystems = nixpkgs.lib.genAttrs systems;
-      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
+      nixpkgsFor = forAllSystems (system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ self.overlays.default ];
+        });
+      forEachSystem = fn:
+        forAllSystems (system:
+          fn {
+            inherit system;
+            pkgs = nixpkgsFor.${system};
+          });
     in
     {
-      devShells = forAllSystems (s:
-        let
-          pkgs = nixpkgsFor.${s};
-          inherit (pkgs) mkShell;
-        in
-        {
-          default = mkShell {
-            packages = [ pkgs.go ];
+      devShells = forEachSystem ({ pkgs, ... }: {
+        default = pkgs.mkShell {
+          packages = [ pkgs.go ];
+        };
+      });
+
+      formatter = forEachSystem (p: p.pkgs.nixpkgs-fmt);
+
+      packages = forEachSystem ({ pkgs, ... }: {
+        inherit (pkgs) nyoom;
+        default = pkgs.nyoom;
+      });
+
+      overlays.default = _: prev: {
+        nyoom = prev.buildGoModule rec {
+          pname = "nyoom";
+          inherit version;
+
+          src = self;
+
+          vendorHash = "sha256-4Wke/nlkF+NP+dZpPdXb35YfPk5Jsn7Oauyb4iitnGk=";
+
+          meta = with prev.lib; {
+            description = "A small CLI Firefox userchrome manager";
+            homepage = "https://github.com/ryanccn/${pname}";
+            license = licenses.gpl3;
+            maintainers = [
+              {
+                name = "Ryan Cao";
+                email = "hello@ryanccn.dev";
+              }
+            ];
           };
-        });
-
-      packages = forAllSystems (s:
-        let
-          p = packageFn nixpkgsFor.${s};
-        in
-        p // { default = p.nyoom; });
-
-      overlays.default = _: prev: (packageFn prev);
+        };
+      };
     };
 }
