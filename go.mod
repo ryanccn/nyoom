@@ -3,9 +3,9 @@ module github.com/ryanccn/nyoom
 go 1.20
 
 require (
+	github.com/otiai10/copy v1.12.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
-	github.com/otiai10/copy v1.12.0
 )
 
 require (

@@ -32,7 +32,7 @@
               path = ./.;
             };
 
-            vendorHash = "sha256-3tO/+Mnvl/wpS7Ro3XDIVrlYTGVM680mcC15/7ON6qM=";
+            vendorHash = "sha256-4Wke/nlkF+NP+dZpPdXb35YfPk5Jsn7Oauyb4iitnGk=";
 
             meta = {
               description = "A small CLI Firefox userchrome manager";
