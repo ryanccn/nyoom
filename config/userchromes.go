@@ -28,6 +28,16 @@ func GetUserChromes() []Userchrome {
 
 func AddUserChrome(c Userchrome) {
 	data := GetUserChromes()
+
+	for _, ce := range data {
+		if ce.Name == c.Name {
+			log.Fatalf("Userchrome with name %s already exists!", c.Name)
+		}
+		if ce.CloneURL == c.CloneURL {
+			log.Fatalf("Userchrome with clone URL %s already exists: %s", c.CloneURL, ce.Name)
+		}
+	}
+
 	data = append(data, c)
 
 	viper.Set("userchromes", data)
