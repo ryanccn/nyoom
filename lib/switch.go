@@ -44,5 +44,8 @@ func Switch(chrome config.Userchrome, profile string) {
 		log.Fatalln(err)
 	}
 
+	fmt.Println("Applying configs to user.js")
+	applyUserJs(chrome.Configs, profile)
+
 	fmt.Printf("Switched to %s!\n", chrome.Name)
 }

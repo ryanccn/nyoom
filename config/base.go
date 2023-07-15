@@ -9,9 +9,16 @@ import (
 	"github.com/ryanccn/nyoom/utils"
 )
 
+type UserchromeConfig struct {
+	Key   string `toml:"key"`
+	Value string `toml:"value"`
+	Raw   bool   `toml:"raw"`
+}
+
 type Userchrome struct {
 	Name     string             `toml:"name"`
 	CloneURL string             `toml:"clone_url"`
+	Configs  []UserchromeConfig `toml:"configs"`
 }
 
 type Config struct {
