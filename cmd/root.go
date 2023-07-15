@@ -8,7 +8,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "nyoom",
-	Short: "nyoom · Firefox userChrome manager",
+	Short: "nyoom · Firefox userchrome manager",
 }
 
 func Execute() {
