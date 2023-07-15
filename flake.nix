@@ -52,7 +52,7 @@
 
           src = self;
 
-          vendorHash = "sha256-4Wke/nlkF+NP+dZpPdXb35YfPk5Jsn7Oauyb4iitnGk=";
+          vendorHash = "sha256-PNYyBB7EdMvcajoe9P2lzx5pzMFqfw1FyfOZQA40fmQ=";
 
           meta = with prev.lib; {
             description = "A small CLI Firefox userchrome manager";
