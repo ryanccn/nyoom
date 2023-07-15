@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/ryanccn/nyoom/config"
@@ -42,10 +43,33 @@ var configUnsetCommand = &cobra.Command{
 	},
 }
 
+var configListCommand = &cobra.Command{
+	Use:   "list <userchrome>",
+	Short: "Lists Firefox configs for a userchrome",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		userchromes := config.ReadConfig().Userchromes
+
+		for _, chrome := range userchromes {
+			if chrome.Name == name {
+				for _, ffCfg := range chrome.Configs {
+					fmt.Printf("%v = %v (raw: %v)\n", ffCfg.Key, ffCfg.Value, ffCfg.Raw)
+				}
+
+				return
+			}
+		}
+
+		log.Fatalf("%s not found", name)
+	},
+}
+
 func init() {
 	configAddCmd.Flags().BoolVarP(&configAddRaw, "raw", "r", false, "Whether the provided is a raw JavaScript value (true) or a string (false)")
 	configCmd.AddCommand(configAddCmd)
 	configCmd.AddCommand(configUnsetCommand)
+	configCmd.AddCommand(configListCommand)
 
 	rootCmd.AddCommand(configCmd)
 }
