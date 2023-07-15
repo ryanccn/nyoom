@@ -42,8 +42,10 @@ func applyUserJs(configs []config.UserchromeConfig, profile string) {
 		}
 	}
 
+	completeConfigs := append([]config.UserchromeConfig{{Key: "toolkit.legacyUserProfileCustomizations.stylesheets", Value: "true", Raw: true}}, configs...)
+
 	addedLines := []string{}
-	for _, config := range configs {
+	for _, config := range completeConfigs {
 		actualValue := config.Value
 		if !config.Raw {
 			actualValue = "\"" + actualValue + "\""
