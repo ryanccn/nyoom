@@ -7,8 +7,9 @@ import (
 )
 
 type Userchrome struct {
-	Name     string `mapstructure:"name"`
-	CloneURL string `mapstructure:"clone_url"`
+	Name     string           `mapstructure:"name" toml:"name"`
+	CloneURL string           `mapstructure:"clone_url" toml:"clone_url"`
+	Config   UserchromeConfig `mapstructure:"config" toml:"config"`
 }
 
 func GetUserChromes() []Userchrome {
