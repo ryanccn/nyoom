@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/ryanccn/nyoom/config"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var profileCmd = &cobra.Command{
@@ -34,17 +34,17 @@ var profileCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		isSetting := len(args) > 0
+		cfg := config.ReadConfig()
 
 		if isSetting {
-			viper.Set("profile", args[0])
-			err := viper.WriteConfig()
-
+			cfg.Profile = args[0]
+			err := config.WriteConfig(cfg)
 			if err != nil {
-				log.Fatalln(err)
+				log.Fatal(err)
 			}
 		} else {
-			if viper.IsSet("profile") {
-				fmt.Println(viper.GetString("profile"))
+			if len(cfg.Profile) > 0 {
+				fmt.Println(cfg.Profile)
 			} else {
 				fmt.Println("Not configured")
 			}

@@ -7,7 +7,6 @@ import (
 	"github.com/ryanccn/nyoom/config"
 	"github.com/ryanccn/nyoom/lib"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var userchromeListCmd = &cobra.Command{
@@ -42,11 +41,11 @@ var userchromeSwitchCmd = &cobra.Command{
 	Short: "Switch to a userchrome",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		userchromes := config.GetUserChromes()
+		cfg := config.ReadConfig()
 
-		for _, chrome := range userchromes {
+		for _, chrome := range cfg.Userchromes {
 			if chrome.Name == args[0] {
-				profile := viper.GetString("profile")
+				profile := cfg.Profile
 				lib.Switch(chrome, profile)
 				return
 			}

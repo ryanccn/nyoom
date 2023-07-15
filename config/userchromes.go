@@ -1,36 +1,18 @@
 package config
 
 import (
+	"fmt"
 	"log"
-
-	"github.com/spf13/viper"
 )
 
-type Userchrome struct {
-	Name     string           `mapstructure:"name" toml:"name"`
-	CloneURL string           `mapstructure:"clone_url" toml:"clone_url"`
-	Config   UserchromeConfig `mapstructure:"config" toml:"config"`
-}
-
 func GetUserChromes() []Userchrome {
-	var data []Userchrome
-
-	if !viper.IsSet("userchromes") {
-		return []Userchrome{}
-	}
-
-	err := viper.UnmarshalKey("userchromes", &data)
-	if err != nil {
-		log.Fatalf("Unable to decode into struct, %v", err)
-	}
-
-	return data
+	return ReadConfig().Userchromes
 }
 
 func AddUserChrome(c Userchrome) {
-	data := GetUserChromes()
+	config := ReadConfig()
 
-	for _, ce := range data {
+	for _, ce := range config.Userchromes {
 		if ce.Name == c.Name {
 			log.Fatalf("Userchrome with name %s already exists!", c.Name)
 		}
@@ -39,11 +21,9 @@ func AddUserChrome(c Userchrome) {
 		}
 	}
 
-	data = append(data, c)
+	config.Userchromes = append(config.Userchromes, c)
 
-	viper.Set("userchromes", data)
-
-	err := viper.WriteConfig()
+	err := WriteConfig(config)
 	if err != nil {
 		log.Fatalln(err)
 	}
