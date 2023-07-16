@@ -1,8 +1,10 @@
 package lib
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -10,20 +12,47 @@ import (
 	"github.com/ryanccn/nyoom/utils"
 )
 
-func getProfileUserJsPath(profile string) string {
+func getProfileUserJsPath(profile string) (string, bool) {
 	arkenfoxPath := filepath.Join(profile, "user-overrides.js")
 
 	if utils.Exists(arkenfoxPath) {
-		return arkenfoxPath
+		return arkenfoxPath, true
 	}
-	return filepath.Join(profile, "user.js")
+	return filepath.Join(profile, "user.js"), false
+}
+
+func runArkenfoxScript(profile string, name string, args ...string) {
+	windowsBin := filepath.Join(profile, name+".bat")
+	normalBin := filepath.Join(profile, name+".sh")
+
+	if utils.Exists(windowsBin) {
+		cmd := exec.Command(windowsBin, args...)
+		cmd.Dir = profile
+		cmd.Stderr = os.Stderr
+
+		err := cmd.Run()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if utils.Exists(normalBin) {
+		cmd := exec.Command(normalBin, args...)
+		cmd.Dir = profile
+		cmd.Stderr = os.Stderr
+
+		err := cmd.Run()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 const startLine = "/** nyoom-managed config; do not edit */"
 const endLine = "/** end of nyoom-managed config */"
 
 func applyUserJs(configs []config.UserchromeConfig, profile string) {
-	path := getProfileUserJsPath(profile)
+	path, arkenfox := getProfileUserJsPath(profile)
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
@@ -66,4 +95,10 @@ func applyUserJs(configs []config.UserchromeConfig, profile string) {
 	}
 
 	os.WriteFile(path, []byte(strings.Join(newContent, "\n")), 0655)
+
+	if arkenfox {
+		fmt.Println("Updating Arkenfox")
+		runArkenfoxScript(profile, "updater", "-s")
+		runArkenfoxScript(profile, "prefsCleaner", "-s")
+	}
 }
