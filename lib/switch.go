@@ -34,7 +34,12 @@ func Switch(chrome config.Userchrome, profile string) {
 	}
 	os.Mkdir(newChromeDir, 0755)
 
-	err = copy.Copy(path.Join(tempDir, "chrome"), newChromeDir)
+	chromeDirectory := path.Join(tempDir, "chrome")
+	if !utils.Exists(chromeDirectory) {
+		chromeDirectory = tempDir
+	}
+
+	err = copy.Copy(chromeDirectory, newChromeDir)
 	if err != nil {
 		log.Fatalln(err)
 	}
