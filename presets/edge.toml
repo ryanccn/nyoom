@@ -1,0 +1,27 @@
+name = 'edge'
+clone_url = 'https://github.com/bmFtZQ/edge-frfox.git'
+
+[[configs]]
+key = 'svg.context-properties.content.enabled'
+value = 'true'
+raw = true
+
+[[configs]]
+key = 'layout.css.color-mix.enabled'
+value = 'true'
+raw = true
+
+[[configs]]
+key = 'widget.macos.native-context-menus'
+value = 'false'
+raw = true
+
+[[configs]]
+key = 'browser.tabs.tabMinWidth'
+value = '66'
+raw = true
+
+[[configs]]
+key = 'browser.tabs.tabClipWidth'
+value = '86'
+raw = true

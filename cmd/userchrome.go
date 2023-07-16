@@ -6,6 +6,7 @@ import (
 
 	"github.com/ryanccn/nyoom/config"
 	"github.com/ryanccn/nyoom/lib"
+	"github.com/ryanccn/nyoom/presets"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +37,26 @@ var userchromeAddCmd = &cobra.Command{
 	},
 }
 
+var userchromePresetCmd = &cobra.Command{
+	Use:   "preset <name>",
+	Short: "Add a new userchrome from a preset",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			for _, c := range presets.ListPresets() {
+				fmt.Printf("- %s\n", c)
+			}
+			return
+		}
+
+		presetName := args[0]
+		config.AddUserChrome(presets.GetPreset(presetName))
+
+		fmt.Printf("Added userchrome %s from preset!\n", presetName)
+		fmt.Printf("Run `nyoom switch %s` to switch to this userchrome.\n", presetName)
+	},
+}
+
 var userchromeSwitchCmd = &cobra.Command{
 	Use:   "switch <name>",
 	Short: "Switch to a userchrome",
@@ -58,5 +79,6 @@ var userchromeSwitchCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(userchromeListCmd)
 	rootCmd.AddCommand(userchromeAddCmd)
+	rootCmd.AddCommand(userchromePresetCmd)
 	rootCmd.AddCommand(userchromeSwitchCmd)
 }

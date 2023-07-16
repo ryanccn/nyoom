@@ -1,0 +1,12 @@
+name = 'material'
+clone_url = 'https://github.com/muckSponge/MaterialFox.git'
+
+[[configs]]
+key = 'browser.tabs.tabClipWidth'
+value = '83'
+raw = true
+
+[[configs]]
+key = 'security.insecure_connection_text.enabled'
+value = 'true'
+raw = true

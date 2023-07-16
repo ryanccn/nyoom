@@ -14,10 +14,10 @@ func AddUserChrome(c Userchrome) {
 
 	for _, ce := range config.Userchromes {
 		if ce.Name == c.Name {
-			log.Fatalf("Userchrome with name %s already exists!", c.Name)
+			log.Fatalf("userchrome with name %s already exists!", c.Name)
 		}
 		if ce.CloneURL == c.CloneURL {
-			log.Fatalf("Userchrome with clone URL %s already exists: %s", c.CloneURL, ce.Name)
+			log.Fatalf("userchrome with clone URL %s already exists: %s", c.CloneURL, ce.Name)
 		}
 	}
 
