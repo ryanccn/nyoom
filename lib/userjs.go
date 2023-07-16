@@ -25,26 +25,22 @@ func runArkenfoxScript(profile string, name string, args ...string) {
 	windowsBin := filepath.Join(profile, name+".bat")
 	normalBin := filepath.Join(profile, name+".sh")
 
+	var cmd *exec.Cmd
 	if utils.Exists(windowsBin) {
-		cmd := exec.Command(windowsBin, args...)
-		cmd.Dir = profile
-		cmd.Stderr = os.Stderr
-
-		err := cmd.Run()
-
-		if err != nil {
-			log.Fatal(err)
-		}
+		cmd = exec.Command(windowsBin, args...)
 	} else if utils.Exists(normalBin) {
-		cmd := exec.Command(normalBin, args...)
-		cmd.Dir = profile
-		cmd.Stderr = os.Stderr
+		cmd = exec.Command(normalBin, args...)
+	} else {
+		log.Fatalf("script %s not found in profile directory", name)
+	}
 
-		err := cmd.Run()
+	cmd.Dir = profile
+	cmd.Stderr = os.Stderr
 
-		if err != nil {
-			log.Fatal(err)
-		}
+	err := cmd.Run()
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
