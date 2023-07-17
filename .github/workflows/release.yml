@@ -17,7 +17,7 @@ jobs:
           - "x86_64-unknown-linux-musl"
           - "aarch64-unknown-linux-musl"
           - "x86_64-pc-windows-msvc"
-          - "aarch64-pc-windows-msvc"
+          # - "aarch64-pc-windows-msvc"
           - "x86_64-apple-darwin"
           - "aarch64-apple-darwin"
         include:
@@ -31,8 +31,8 @@ jobs:
             runner: ubuntu-latest
           - target: "x86_64-pc-windows-msvc"
             runner: windows-latest
-          - target: "aarch64-pc-windows-msvc"
-            runner: windows-latest
+          # - target: "aarch64-pc-windows-msvc"
+          #   runner: windows-latest
           - target: "x86_64-apple-darwin"
             runner: macos-latest
           - target: "aarch64-apple-darwin"
@@ -52,10 +52,11 @@ jobs:
           override: true
 
       - name: Build
-        run: cargo build -r --target ${{ matrix.target }}
-
-      - name: Rename artifact
-        run: cp target/${{ matrix.target }}/release/nyoom target/${{ matrix.target }}/release/nyoom-${{ matrix.target }}
+        id: build
+        run: ./scripts/build.sh
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
 
       - name: Upload to release
         uses: softprops/action-gh-release@v1
