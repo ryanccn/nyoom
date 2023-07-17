@@ -50,7 +50,7 @@ const START_LINE: &str = "/** nyoom-managed config; do not edit */";
 const END_LINE: &str = "/** end of nyoom-managed config */";
 
 fn patch_user_file(userchrome: &Userchrome, f: PathBuf) {
-    let contents = fs::read_to_string(&f).unwrap();
+    let contents = fs::read_to_string(&f).unwrap_or("".to_owned());
     let lines: Vec<String> = contents.split("\n").map(|a| a.to_owned()).collect();
 
     let mut new_lines = vec![
@@ -121,7 +121,9 @@ pub fn switch(userchrome: &Userchrome, profile: String) {
 
     let new_chrome_dir = Path::new(&profile).join("chrome");
 
-    fs::remove_dir_all(&new_chrome_dir).unwrap();
+    if new_chrome_dir.exists() {
+        fs::remove_dir_all(&new_chrome_dir).unwrap();
+    }
 
     let mut cloned_chrome_dir = temp_path.join("chrome");
     if !cloned_chrome_dir.exists() {
