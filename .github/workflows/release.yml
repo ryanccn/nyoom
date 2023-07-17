@@ -63,3 +63,11 @@ jobs:
         with:
           files: ${{ steps.build.outputs.path }}
           draft: true
+
+  publish:
+    needs: ["build"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Publish release
+        run: gh release edit ${{ github.ref_name }} --draft=false
