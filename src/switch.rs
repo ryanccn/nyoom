@@ -51,7 +51,7 @@ const END_LINE: &str = "/** end of nyoom-managed config */";
 
 fn patch_user_file(userchrome: &Userchrome, f: PathBuf) {
     let contents = fs::read_to_string(&f).unwrap_or("".to_owned());
-    let lines: Vec<String> = contents.split("\n").map(|a| a.to_owned()).collect();
+    let lines: Vec<String> = contents.split('\n').map(|a| a.to_owned()).collect();
 
     let mut new_lines = vec![
         "user_pref(\"toolkit.legacyUserProfileCustomizations.stylesheets\", true);".to_owned(),
@@ -69,18 +69,22 @@ fn patch_user_file(userchrome: &Userchrome, f: PathBuf) {
         new_lines.push(format!("user_pref(\"{key}\", {value});"));
     }
 
-    let mut ret_lines: Vec<String>;
+    let mut ret_lines: Vec<String> = vec![];
     let start_idx = lines.iter().position(|k| k.eq(&START_LINE));
     let end_idx = lines.iter().position(|k| k.eq(&END_LINE));
 
-    if start_idx.is_some() && end_idx.is_some() {
-        let start_idx_s = start_idx.unwrap();
-        let end_idx_s = end_idx.unwrap();
+    let mut ret_set = false;
 
-        ret_lines = lines[0..start_idx_s + 1].to_vec();
-        ret_lines.append(&mut new_lines);
-        ret_lines.append(&mut lines[end_idx_s..].to_vec());
-    } else {
+    if let Some(start_idx) = start_idx {
+        if let Some(end_idx) = end_idx {
+            ret_lines = lines[0..start_idx + 1].to_vec();
+            ret_lines.append(&mut new_lines);
+            ret_lines.append(&mut lines[end_idx..].to_vec());
+            ret_set = true;
+        }
+    }
+
+    if !ret_set {
         ret_lines = lines.clone();
         ret_lines.push(START_LINE.to_owned());
         ret_lines.append(&mut new_lines);

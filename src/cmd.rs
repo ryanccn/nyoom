@@ -126,8 +126,8 @@ pub fn main() {
             if let Some(name) = name {
                 let preset = presets
                     .into_iter()
-                    .find(|p| p.name == name.to_owned())
-                    .expect(&format!("no preset named {} exists!", name));
+                    .find(|p| p.name == *name)
+                    .unwrap_or_else(|| panic!("no preset named {} exists!", name));
 
                 let mut config = config::get_config();
 
@@ -159,7 +159,7 @@ pub fn main() {
                     .userchromes
                     .iter()
                     .find(|d| d.name.eq(name))
-                    .expect(&format!("no userchrome with name {} exists", name));
+                    .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
 
                 for c in &uc.configs {
                     println!("{} = {} (raw: {})", c.key, c.value, c.raw);
@@ -177,9 +177,9 @@ pub fn main() {
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .expect(&format!("no userchrome with name {} exists", name));
+                    .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
 
-                let existing = chrome.configs.iter_mut().find(|c| c.key == key.to_string());
+                let existing = chrome.configs.iter_mut().find(|c| c.key == *key);
 
                 if let Some(existing) = existing {
                     existing.value = value.to_string();
@@ -201,12 +201,12 @@ pub fn main() {
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .expect(&format!("no userchrome with name {} exists", name));
+                    .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
 
                 let existing = chrome
                     .configs
                     .iter_mut()
-                    .position(|c| c.key == key.to_string());
+                    .position(|c| c.key == *key);
 
                 if let Some(existing) = existing {
                     chrome.configs.remove(existing);
