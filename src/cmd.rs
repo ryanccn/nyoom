@@ -86,7 +86,7 @@ enum ConfigSubcommands {
     },
 }
 
-pub fn main() -> Result<(), Box<dyn std::error::Error>> {
+pub fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
@@ -140,7 +140,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let preset = presets
                     .into_iter()
                     .find(|p| p.name == *name)
-                    .ok_or(format!("no preset named {} exists!", name))?;
+                    .ok_or(anyhow!("no preset named {} exists!", name))?;
 
                 let mut config = config::get_config()?;
 
@@ -182,7 +182,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .userchromes
                     .iter()
                     .find(|d| d.name.eq(name))
-                    .ok_or(format!("no userchrome with name {} exists", name))?;
+                    .ok_or(anyhow!("no userchrome with name {} exists", name))?;
 
                 for c in &uc.configs {
                     println!("{} = {} (raw: {})", c.key, c.value, c.raw);
@@ -202,7 +202,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .ok_or(format!("no userchrome with name {} exists", name))?;
+                    .ok_or(anyhow!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().find(|c| c.key == *key);
 
@@ -250,7 +250,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "fish" => Ok(Shell::Fish),
                 "pwsh" => Ok(Shell::PowerShell),
                 "powershell" => Ok(Shell::PowerShell),
-                &_ => Err(format!("{} is not a valid shell", shell)),
+                &_ => Err(anyhow!("{} is not a valid shell", shell)),
             }?;
 
             let cmd = &mut Cli::command();

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::{fs, path};
 
 use colored::*;
@@ -29,15 +29,15 @@ pub struct Config {
     pub userchromes: Vec<Userchrome>,
 }
 
-fn get_config_path() -> Result<path::PathBuf, Box<dyn std::error::Error>> {
+fn get_config_path() -> Result<path::PathBuf> {
     if let Some(config_dir) = dirs::config_dir() {
         Ok(config_dir.join("nyoom.toml"))
     } else {
-        Err("unable to locate config dirs".into())
+        Err(anyhow!("unable to locate config dirs"))
     }
 }
 
-pub fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
+pub fn get_config() -> Result<Config> {
     let path = get_config_path()?;
     let f = match path.exists() {
         true => fs::read_to_string(path)?,
@@ -48,7 +48,7 @@ pub fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
     Ok(config)
 }
 
-pub fn set_config(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn set_config(config: Config) -> Result<()> {
     let serialized = toml::to_string_pretty(&config)?;
     fs::write(get_config_path()?, serialized)?;
 
