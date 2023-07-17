@@ -1,4 +1,3 @@
-use nanoid::nanoid;
 use std::{
     env, fs,
     io::Result,
@@ -6,7 +5,10 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::config::{Userchrome, UserchromeConfig};
+use colored::*;
+use nanoid::nanoid;
+
+use crate::config::{print_userchrome, Userchrome, UserchromeConfig};
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<()> {
     fs::create_dir_all(&dst)?;
@@ -100,6 +102,8 @@ fn user(userchrome: &Userchrome, profile: &str) {
 
     if arkenfox {
         patch_user_file(userchrome, Path::new(&profile).join("user-overrides.js"));
+
+        println!("{} updating arkenfox", "4".green());
         run_arkenfox_script(profile, "updater", vec!["-s"]);
         run_arkenfox_script(profile, "prefsCleaner", vec!["-s"]);
     } else {
@@ -108,7 +112,12 @@ fn user(userchrome: &Userchrome, profile: &str) {
 }
 
 pub fn switch(userchrome: &Userchrome, profile: String) {
+    print_userchrome(userchrome, false);
+    println!();
+
     let temp_path = env::temp_dir().join(nanoid!());
+
+    println!("{} cloning repository", "1".green());
 
     let mut clone_cmd = Command::new("git");
     clone_cmd.args([
@@ -123,6 +132,8 @@ pub fn switch(userchrome: &Userchrome, profile: String) {
 
     clone_cmd.status().unwrap();
 
+    println!("{} installing userchrome", "2".green());
+
     let new_chrome_dir = Path::new(&profile).join("chrome");
 
     if new_chrome_dir.exists() {
@@ -136,5 +147,9 @@ pub fn switch(userchrome: &Userchrome, profile: String) {
 
     copy_dir_all(&cloned_chrome_dir, &new_chrome_dir).unwrap();
 
+    println!("{} applying user.js", "3".green());
+
     user(userchrome, profile.as_str());
+
+    println!("{}", "done!".green());
 }

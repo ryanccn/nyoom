@@ -92,18 +92,20 @@ pub fn main() {
         Commands::List {} => {
             let config = config::get_config();
             for u in config.userchromes {
-                println!("{} -> {}", u.name, u.clone_url);
+                config::print_userchrome(&u, false);
             }
         }
 
         Commands::Add { name, clone_url } => {
             let mut config = config::get_config();
 
-            config.userchromes.push(config::Userchrome {
+            let new_userchrome = config::Userchrome {
                 name: name.to_string(),
                 clone_url: clone_url.to_string(),
                 configs: vec![],
-            });
+            };
+            config::print_userchrome(&new_userchrome, false);
+            config.userchromes.push(new_userchrome);
 
             config::set_config(config);
         }
@@ -139,7 +141,7 @@ pub fn main() {
                 config::set_config(config);
             } else {
                 presets.into_iter().for_each(|p| {
-                    println!("{} -> {}", p.name, p.clone_url);
+                    config::print_userchrome(&p, true);
                 })
             }
         }
