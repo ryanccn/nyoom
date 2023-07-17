@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path};
 
 use serde::{Deserialize, Serialize};
 
@@ -18,22 +18,23 @@ pub struct Userchrome {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
+    #[serde(default)]
     pub profile: String,
+
+    #[serde(default)]
     pub userchromes: Vec<Userchrome>,
 }
 
-fn get_config_path() -> String {
-    String::from(
-        dirs::config_dir()
-            .unwrap()
-            .join("nyoom.toml")
-            .to_str()
-            .unwrap(),
-    )
+fn get_config_path() -> path::PathBuf {
+    dirs::config_dir().unwrap().join("nyoom.toml")
 }
 
 pub fn get_config() -> Config {
-    let f = fs::read_to_string(get_config_path()).unwrap();
+    let path = get_config_path();
+    let f = match path.exists() {
+        true => fs::read_to_string(path).unwrap(),
+        false => "".into(),
+    };
     let config: Config = toml::from_str(&f).unwrap();
 
     config

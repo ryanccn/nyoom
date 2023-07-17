@@ -112,6 +112,9 @@ pub fn main() {
             let config = config::get_config();
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
+                    if config.profile == "" {
+                        panic!("no profile configured")
+                    }
                     switch::switch(u, config.profile);
                 }
                 None => {
@@ -148,7 +151,13 @@ pub fn main() {
                 config::set_config(config);
             } else {
                 let config = config::get_config();
-                println!("{}", config.profile);
+                println!(
+                    "{}",
+                    match config.profile != "" {
+                        true => config.profile,
+                        false => "not set".into(),
+                    }
+                );
             }
         }
 
