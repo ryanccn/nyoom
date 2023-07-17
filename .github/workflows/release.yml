@@ -61,15 +61,5 @@ jobs:
       - name: Upload to release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/${{ matrix.target }}/release/nyoom-${{ matrix.target }}
+          files: ${{ steps.build.outputs.path }}
           draft: true
-
-  release:
-    runs-on: ubuntu-latest
-    needs: ["build"]
-
-    steps:
-      - name: Publish release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: false
