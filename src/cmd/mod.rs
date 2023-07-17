@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use crate::{config, util};
+use crate::{config, switch};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -48,7 +48,7 @@ pub fn main() {
             let config = crate::config::get_config();
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
-                    util::switch::switch(u, config.profile);
+                    switch::switch(u, config.profile);
                 }
                 None => {
                     panic!("No userchrome with name {} found!", name)
