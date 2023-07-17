@@ -3,3 +3,10 @@
 
 # Nix
 result
+
+# Rust
+/target
+
+# IDE
+.vscode/
+.idea/

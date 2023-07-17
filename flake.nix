@@ -1,7 +1,9 @@
 {
   description = "A small CLI Firefox userchrome manager";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+  };
 
   outputs =
     { self
@@ -24,6 +26,7 @@
           inherit system;
           overlays = [ self.overlays.default ];
         });
+
       forEachSystem = fn:
         forAllSystems (system:
           fn {
@@ -32,13 +35,19 @@
           });
     in
     {
-      devShells = forEachSystem ({ pkgs, ... }: {
-        default = pkgs.mkShell {
-          packages = [ pkgs.go ];
-        };
-      });
+      devShells = forEachSystem ({ pkgs, ... }:
+        let
+          inherit (pkgs) mkShell;
+        in
+        {
+          default = mkShell {
+            packages = with pkgs; [
+              bash
+            ];
+          };
+        });
 
-      formatter = forEachSystem (p: p.pkgs.nixpkgs-fmt);
+      formatter = forEachSystem ({ pkgs, ... }: pkgs.nixpkgs-fmt);
 
       packages = forEachSystem ({ pkgs, ... }: {
         inherit (pkgs) nyoom;
@@ -46,26 +55,21 @@
       });
 
       overlays.default = _: prev: {
-        nyoom = prev.buildGoModule rec {
-          pname = "nyoom";
-          inherit version;
+        nyoom = prev.pkgs.rustPlatform.buildRustPackage
+          {
+            pname = "nyoom";
+            inherit version;
 
-          src = self;
+            src = self;
 
-          vendorHash = "sha256-PNYyBB7EdMvcajoe9P2lzx5pzMFqfw1FyfOZQA40fmQ=";
+            cargoLock.lockFile = "${self}/Cargo.lock";
 
-          meta = with prev.lib; {
-            description = "A small CLI Firefox userchrome manager";
-            homepage = "https://github.com/ryanccn/${pname}";
-            license = licenses.gpl3;
-            maintainers = [
-              {
-                name = "Ryan Cao";
-                email = "hello@ryanccn.dev";
-              }
+            buildInputs = with prev.pkgs; [ ];
+
+            nativeBuildInputs = with prev.pkgs; [
+              pkg-config
             ];
           };
-        };
       };
     };
 }
