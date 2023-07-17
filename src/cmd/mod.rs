@@ -19,6 +19,9 @@ enum Commands {
 
     /// switch to a userchrome
     Switch { name: String },
+
+    /// configure Fierfox profile or get current directory
+    Profile { path: Option<String> },
 }
 
 pub fn main() {
@@ -26,14 +29,14 @@ pub fn main() {
 
     match &cli.command {
         Commands::List {} => {
-            let config = crate::config::get_config();
+            let config = config::get_config();
             for u in config.userchromes {
                 println!("{} -> {}", u.name, u.clone_url);
             }
         }
 
         Commands::Add { name, clone_url } => {
-            let mut config = crate::config::get_config();
+            let mut config = config::get_config();
 
             config.userchromes.push(config::Userchrome {
                 name: name.to_string(),
@@ -45,7 +48,7 @@ pub fn main() {
         }
 
         Commands::Switch { name } => {
-            let config = crate::config::get_config();
+            let config = config::get_config();
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
                     switch::switch(u, config.profile);
@@ -54,6 +57,17 @@ pub fn main() {
                     panic!("No userchrome with name {} found!", name)
                 }
             };
+        }
+
+        Commands::Profile { path } => {
+            if let Some(path) = path {
+                let mut config = config::get_config();
+                config.profile = path.to_owned();
+                config::set_config(config);
+            } else {
+                let config = config::get_config();
+                println!("{}", config.profile);
+            }
         }
     }
 }
