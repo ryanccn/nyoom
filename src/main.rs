@@ -3,6 +3,11 @@ mod config;
 mod presets;
 mod switch;
 
+use colored::*;
+
 fn main() {
-    cmd::main()
+    if let Err(err) = cmd::main() {
+        println!("{}", "Encountered error:".red().bold());
+        println!("{}", err);
+    }
 }

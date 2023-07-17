@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::{fs, path};
 
 use colored::*;
@@ -28,24 +29,30 @@ pub struct Config {
     pub userchromes: Vec<Userchrome>,
 }
 
-fn get_config_path() -> path::PathBuf {
-    dirs::config_dir().unwrap().join("nyoom.toml")
+fn get_config_path() -> Result<path::PathBuf, Box<dyn std::error::Error>> {
+    if let Some(config_dir) = dirs::config_dir() {
+        Ok(config_dir.join("nyoom.toml"))
+    } else {
+        Err("unable to locate config dirs".into())
+    }
 }
 
-pub fn get_config() -> Config {
-    let path = get_config_path();
+pub fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
+    let path = get_config_path()?;
     let f = match path.exists() {
-        true => fs::read_to_string(path).unwrap(),
+        true => fs::read_to_string(path)?,
         false => "".into(),
     };
-    let config: Config = toml::from_str(&f).unwrap();
+    let config: Config = toml::from_str(&f)?;
 
-    config
+    Ok(config)
 }
 
-pub fn set_config(config: Config) {
-    let serialized = toml::to_string_pretty(&config).unwrap();
-    fs::write(get_config_path(), serialized).unwrap();
+pub fn set_config(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+    let serialized = toml::to_string_pretty(&config)?;
+    fs::write(get_config_path()?, serialized)?;
+
+    Ok(())
 }
 
 pub fn print_userchrome(userchrome: &Userchrome, short: bool) {

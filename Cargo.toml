@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["Ryan Cao <hello@ryanccn.dev>"]
 
 [dependencies]
+anyhow = "1.0.72"
 clap = { version = "4.3.12", features = ["derive"] }
 clap_complete = "4.3.2"
 colored = "2.0.4"

@@ -1,6 +1,7 @@
 use clap::{CommandFactory, Parser, Subcommand, ValueHint};
 use clap_complete::{generate, Shell};
 
+use anyhow::{anyhow, Result};
 use std::io;
 
 use crate::{config, presets, switch};
@@ -85,19 +86,21 @@ enum ConfigSubcommands {
     },
 }
 
-pub fn main() {
+pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::List {} => {
-            let config = config::get_config();
+            let config = config::get_config()?;
             for u in config.userchromes {
                 config::print_userchrome(&u, false);
             }
+
+            Ok(())
         }
 
         Commands::Add { name, clone_url } => {
-            let mut config = config::get_config();
+            let mut config = config::get_config()?;
 
             let new_userchrome = config::Userchrome {
                 name: name.to_string(),
@@ -107,52 +110,59 @@ pub fn main() {
             config::print_userchrome(&new_userchrome, false);
             config.userchromes.push(new_userchrome);
 
-            config::set_config(config);
+            config::set_config(config)?;
+
+            Ok(())
         }
 
         Commands::Switch { name } => {
-            let config = config::get_config();
+            let config = config::get_config()?;
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
                     if config.profile == "" {
                         panic!("no profile configured")
                     }
-                    switch::switch(u, config.profile);
+
+                    switch::switch(u, config.profile)?;
                 }
                 None => {
                     panic!("no userchrome with name {} found!", name)
                 }
             };
+
+            Ok(())
         }
 
         Commands::Preset { name } => {
-            let presets = presets::get_presets();
+            let presets = presets::get_presets()?;
 
             if let Some(name) = name {
                 let preset = presets
                     .into_iter()
                     .find(|p| p.name == *name)
-                    .unwrap_or_else(|| panic!("no preset named {} exists!", name));
+                    .ok_or(format!("no preset named {} exists!", name))?;
 
-                let mut config = config::get_config();
+                let mut config = config::get_config()?;
 
                 config.userchromes.push(preset);
 
-                config::set_config(config);
+                config::set_config(config)?;
             } else {
                 presets.into_iter().for_each(|p| {
                     config::print_userchrome(&p, true);
                 })
             }
+
+            Ok(())
         }
 
         Commands::Profile { path } => {
             if let Some(path) = path {
-                let mut config = config::get_config();
+                let mut config = config::get_config()?;
                 config.profile = path.to_owned();
-                config::set_config(config);
+                config::set_config(config)?;
             } else {
-                let config = config::get_config();
+                let config = config::get_config()?;
                 println!(
                     "{}",
                     match config.profile != "" {
@@ -161,20 +171,24 @@ pub fn main() {
                     }
                 );
             }
+
+            Ok(())
         }
 
         Commands::Config { command } => match command {
             ConfigSubcommands::List { name } => {
-                let config = config::get_config();
+                let config = config::get_config()?;
                 let uc = config
                     .userchromes
                     .iter()
                     .find(|d| d.name.eq(name))
-                    .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
+                    .ok_or(format!("no userchrome with name {} exists", name))?;
 
                 for c in &uc.configs {
                     println!("{} = {} (raw: {})", c.key, c.value, c.raw);
                 }
+
+                Ok(())
             }
 
             ConfigSubcommands::Set {
@@ -183,12 +197,12 @@ pub fn main() {
                 value,
                 raw,
             } => {
-                let mut config = config::get_config();
+                let mut config = config::get_config()?;
                 let chrome = config
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
+                    .ok_or(format!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().find(|c| c.key == *key);
 
@@ -203,16 +217,18 @@ pub fn main() {
                     });
                 }
 
-                config::set_config(config);
+                config::set_config(config)?;
+
+                Ok(())
             }
 
             ConfigSubcommands::Unset { name, key } => {
-                let mut config = config::get_config();
+                let mut config = config::get_config()?;
                 let chrome = config
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
+                    .ok_or(anyhow!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().position(|c| c.key == *key);
 
@@ -220,7 +236,9 @@ pub fn main() {
                     chrome.configs.remove(existing);
                 }
 
-                config::set_config(config);
+                config::set_config(config)?;
+
+                Ok(())
             }
         },
 
@@ -233,8 +251,7 @@ pub fn main() {
                 "pwsh" => Ok(Shell::PowerShell),
                 "powershell" => Ok(Shell::PowerShell),
                 &_ => Err(format!("{} is not a valid shell", shell)),
-            }
-            .unwrap();
+            }?;
 
             let cmd = &mut Cli::command();
 
@@ -244,6 +261,8 @@ pub fn main() {
                 cmd.get_name().to_string(),
                 &mut io::stdout(),
             );
+
+            Ok(())
         }
     }
 }

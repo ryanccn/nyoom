@@ -1,6 +1,6 @@
+use anyhow::{anyhow, Result};
 use std::{
     env, fs,
-    io::Result,
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
@@ -26,7 +26,7 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
-fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) {
+fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) -> Result<()> {
     let suffix = match env::consts::OS {
         "windows" => ".bat",
         &_ => ".sh",
@@ -34,7 +34,11 @@ fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) {
 
     let script = Path::new(&profile).join(name.to_owned() + suffix);
     if !script.exists() {
-        panic!("script {} doesn't exist in profile {}", name, profile);
+        return Err(anyhow!(
+            "script {} doesn't exist in profile {}",
+            name,
+            profile
+        ));
     }
 
     let mut cmd = Command::new(script);
@@ -45,13 +49,15 @@ fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) {
     cmd.stdout(Stdio::null());
     cmd.stderr(Stdio::null());
 
-    cmd.status().unwrap();
+    cmd.status()?;
+
+    Ok(())
 }
 
 const START_LINE: &str = "/** nyoom-managed config; do not edit */";
 const END_LINE: &str = "/** end of nyoom-managed config */";
 
-fn patch_user_file(userchrome: &Userchrome, f: PathBuf) {
+fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
     let contents = fs::read_to_string(&f).unwrap_or("".to_owned());
     let lines: Vec<String> = contents.split('\n').map(|a| a.to_owned()).collect();
 
@@ -94,24 +100,28 @@ fn patch_user_file(userchrome: &Userchrome, f: PathBuf) {
         ret_lines.push("".to_owned());
     }
 
-    fs::write(&f, ret_lines.join("\n")).unwrap();
+    fs::write(&f, ret_lines.join("\n"))?;
+
+    Ok(())
 }
 
-fn user(userchrome: &Userchrome, profile: &str) {
+fn user(userchrome: &Userchrome, profile: &str) -> Result<()> {
     let arkenfox = Path::new(&profile).join("user-overrides.js").exists();
 
     if arkenfox {
-        patch_user_file(userchrome, Path::new(&profile).join("user-overrides.js"));
+        patch_user_file(userchrome, Path::new(&profile).join("user-overrides.js"))?;
 
         println!("{} updating arkenfox", "4".green());
-        run_arkenfox_script(profile, "updater", vec!["-s"]);
-        run_arkenfox_script(profile, "prefsCleaner", vec!["-s"]);
+        run_arkenfox_script(profile, "updater", vec!["-s"])?;
+        run_arkenfox_script(profile, "prefsCleaner", vec!["-s"])?;
     } else {
-        patch_user_file(userchrome, Path::new(&profile).join("user.js"));
+        patch_user_file(userchrome, Path::new(&profile).join("user.js"))?;
     }
+
+    Ok(())
 }
 
-pub fn switch(userchrome: &Userchrome, profile: String) {
+pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     print_userchrome(userchrome, false);
     println!();
 
@@ -124,20 +134,22 @@ pub fn switch(userchrome: &Userchrome, profile: String) {
         "clone",
         "--depth=1",
         &userchrome.clone_url,
-        temp_path.to_str().unwrap(),
+        temp_path
+            .to_str()
+            .ok_or(anyhow!("could not obtain temp path"))?,
     ]);
     clone_cmd.stdin(Stdio::null());
     clone_cmd.stdout(Stdio::null());
     clone_cmd.stderr(Stdio::null());
 
-    clone_cmd.status().unwrap();
+    clone_cmd.status()?;
 
     println!("{} installing userchrome", "2".green());
 
     let new_chrome_dir = Path::new(&profile).join("chrome");
 
     if new_chrome_dir.exists() {
-        fs::remove_dir_all(&new_chrome_dir).unwrap();
+        fs::remove_dir_all(&new_chrome_dir)?;
     }
 
     let mut cloned_chrome_dir = temp_path.join("chrome");
@@ -145,11 +157,13 @@ pub fn switch(userchrome: &Userchrome, profile: String) {
         cloned_chrome_dir = temp_path;
     }
 
-    copy_dir_all(&cloned_chrome_dir, &new_chrome_dir).unwrap();
+    copy_dir_all(&cloned_chrome_dir, &new_chrome_dir)?;
 
     println!("{} applying user.js", "3".green());
 
-    user(userchrome, profile.as_str());
+    user(userchrome, profile.as_str())?;
 
     println!("{}", "done!".green());
+
+    Ok(())
 }
