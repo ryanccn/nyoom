@@ -120,13 +120,13 @@ pub fn main() -> Result<()> {
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
                     if config.profile.is_empty() {
-                        panic!("no profile configured")
+                        return Err(anyhow!("no profile configured"));
                     }
 
                     switch::switch(u, config.profile)?;
                 }
                 None => {
-                    panic!("no userchrome with name {} found!", name)
+                    return Err(anyhow!("no userchrome with name {} found!", name));
                 }
             };
 
