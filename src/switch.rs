@@ -105,13 +105,15 @@ fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn user(userchrome: &Userchrome, profile: &str) -> Result<()> {
+fn user(userchrome: &Userchrome, profile: &str, step_counter: &mut i32) -> Result<()> {
     let arkenfox = Path::new(&profile).join("user-overrides.js").exists();
 
     if arkenfox {
         patch_user_file(userchrome, Path::new(&profile).join("user-overrides.js"))?;
 
-        println!("{} updating arkenfox", "4".green());
+        println!("{} updating arkenfox", step_counter.to_string().green());
+        *step_counter += 1;
+
         run_arkenfox_script(profile, "updater", vec!["-s"])?;
         run_arkenfox_script(profile, "prefsCleaner", vec!["-s"])?;
     } else {
@@ -127,7 +129,10 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
 
     let temp_path = env::temp_dir().join(nanoid!());
 
-    println!("{} cloning repository", "1".green());
+    let mut step_counter = 1;
+
+    println!("{} cloning repository", step_counter.to_string().green());
+    step_counter += 1;
 
     let mut clone_cmd = Command::new("git");
     clone_cmd.args([
@@ -144,7 +149,8 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
 
     clone_cmd.status()?;
 
-    println!("{} installing userchrome", "2".green());
+    println!("{} installing userchrome", step_counter.to_string().green());
+    step_counter += 1;
 
     let new_chrome_dir = Path::new(&profile).join("chrome");
 
@@ -160,8 +166,9 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     copy_dir_all(&cloned_chrome_dir, &new_chrome_dir)?;
 
     println!("{} applying user.js", "3".green());
+    step_counter += 1;
 
-    user(userchrome, profile.as_str())?;
+    user(userchrome, profile.as_str(), &mut step_counter)?;
 
     println!("{}", "done!".green());
 
