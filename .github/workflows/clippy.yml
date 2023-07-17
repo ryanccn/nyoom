@@ -21,6 +21,9 @@ jobs:
           components: rustfmt, clippy
           override: true
 
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
       - name: clippy
         run: cargo clippy --all --all-targets
 
