@@ -10,5 +10,6 @@ clap_complete = "4.3.2"
 colored = "2.0.4"
 dirs = "5.0.1"
 nanoid = "0.4.0"
+rust-embed = "6.8.1"
 serde = { version = "1.0.171", features = ["derive"] }
 toml = "0.7.6"

@@ -3,7 +3,7 @@ use clap_complete::{generate, Shell};
 
 use std::io;
 
-use crate::{config, switch};
+use crate::{config, presets, switch};
 
 #[derive(Parser)]
 #[command(author, version, about = "\x1B[36;1mnyoom · Firefox userchrome manager\x1B[0m", long_about = None)]
@@ -29,6 +29,12 @@ enum Commands {
     Switch {
         /// Name of the userchrome
         name: String,
+    },
+
+    /// Import a preset as a userchrome or list presets
+    Preset {
+        /// Name of the preset
+        name: Option<String>,
     },
 
     /// Configure Firefox profile or get current directory
@@ -112,6 +118,27 @@ pub fn main() {
                     panic!("no userchrome with name {} found!", name)
                 }
             };
+        }
+
+        Commands::Preset { name } => {
+            let presets = presets::get_presets();
+
+            if let Some(name) = name {
+                let preset = presets
+                    .into_iter()
+                    .find(|p| p.name == name.to_owned())
+                    .expect(&format!("no preset named {} exists!", name));
+
+                let mut config = config::get_config();
+
+                config.userchromes.push(preset);
+
+                config::set_config(config);
+            } else {
+                presets.into_iter().for_each(|p| {
+                    println!("{} -> {}", p.name, p.clone_url);
+                })
+            }
         }
 
         Commands::Profile { path } => {
