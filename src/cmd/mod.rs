@@ -54,7 +54,7 @@ pub fn main() {
                     switch::switch(u, config.profile);
                 }
                 None => {
-                    panic!("No userchrome with name {} found!", name)
+                    panic!("no userchrome with name {} found!", name)
                 }
             };
         }
