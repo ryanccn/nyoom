@@ -74,3 +74,5 @@ jobs:
     steps:
       - name: Publish release
         run: gh release edit ${{ github.ref_name }} --draft=false
+        env:
+          GH_TOKEN: ${{ github.token }}
