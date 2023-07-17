@@ -3,11 +3,13 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
   outputs =
     { self
     , nixpkgs
+    , rust-overlay
     , ...
     }:
     let
@@ -24,7 +26,7 @@
       nixpkgsFor = forAllSystems (system:
         import nixpkgs {
           inherit system;
-          overlays = [ self.overlays.default ];
+          overlays = [ self.overlays.default rust-overlay.overlays.default ];
         });
 
       forEachSystem = fn:
@@ -42,8 +44,11 @@
         {
           default = mkShell {
             packages = with pkgs; [
-              bash
+              rust-bin.stable.latest.default
+              rust-analyzer
             ];
+
+            RUST_BACKTRACE = 1;
           };
         });
 
