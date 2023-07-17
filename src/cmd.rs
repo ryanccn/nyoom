@@ -203,10 +203,7 @@ pub fn main() {
                     .find(|d| d.name.eq(name))
                     .unwrap_or_else(|| panic!("no userchrome with name {} exists", name));
 
-                let existing = chrome
-                    .configs
-                    .iter_mut()
-                    .position(|c| c.key == *key);
+                let existing = chrome.configs.iter_mut().position(|c| c.key == *key);
 
                 if let Some(existing) = existing {
                     chrome.configs.remove(existing);
