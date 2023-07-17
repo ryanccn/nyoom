@@ -1,0 +1,12 @@
+[package]
+name = "nyoom"
+version = "0.3.0"
+edition = "2021"
+authors = ["Ryan Cao <hello@ryanccn.dev>"]
+
+[dependencies]
+clap = { version = "4.3.12", features = ["derive"] }
+dirs = "5.0.1"
+nanoid = "0.4.0"
+serde = { version = "1.0.171", features = ["derive"] }
+toml = "0.7.6"

@@ -4,84 +4,71 @@ on:
   push:
     tags: ["v*.*.*"]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
       matrix:
-        go_os: [linux, darwin, windows]
-        go_arch: [amd64, arm64]
+        target:
+          - "x86_64-unknown-linux-gnu"
+          - "aarch64-unknown-linux-gnu"
+          - "x86_64-unknown-linux-musl"
+          - "aarch64-unknown-linux-musl"
+          - "x86_64-pc-windows-msvc"
+          - "aarch64-pc-windows-msvc"
+          - "x86_64-apple-darwin"
+          - "aarch64-apple-darwin"
         include:
-          - go_os: "linux"
+          - target: "x86_64-unknown-linux-gnu"
             runner: ubuntu-latest
-          - go_os: "darwin"
-            runner: macos-latest
-          - go_os: "windows"
+          - target: "aarch64-unknown-linux-gnu"
+            runner: ubuntu-latest
+          - target: "x86_64-unknown-linux-musl"
+            runner: ubuntu-latest
+          - target: "aarch64-unknown-linux-musl"
+            runner: ubuntu-latest
+          - target: "x86_64-pc-windows-msvc"
             runner: windows-latest
+          - target: "aarch64-pc-windows-msvc"
+            runner: windows-latest
+          - target: "x86_64-apple-darwin"
+            runner: macos-latest
+          - target: "aarch64-apple-darwin"
+            runner: macos-latest
+
     runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          go-version: "1.20"
+          toolchain: stable
+          profile: minimal
+          override: true
 
       - name: Build
-        env:
-          GOOS: ${{ matrix.go_os }}
-          GOARCH: ${{ matrix.go_arch }}
-        run: |
-          go build -o build/nyoom-${{ matrix.go_os }}-${{ matrix.go_arch }}
+        run: cargo build -r --target ${{ matrix.target }}
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+      - name: Rename artifact
+        run: cp target/${{ matrix.target }}/release/nyoom target/${{ matrix.target }}/release/nyoom-${{ matrix.target }}
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
         with:
-          name: nyoom-${{ matrix.go_os }}-${{ matrix.go_arch }}
-          path: build/nyoom-${{ matrix.go_os }}-${{ matrix.go_arch }}
+          files: target/${{ matrix.target }}/release/nyoom-${{ matrix.target }}
+          draft: true
 
   release:
     runs-on: ubuntu-latest
     needs: ["build"]
 
-    permissions:
-      contents: write
-
     steps:
-      - name: Download artifact (linux/amd64)
-        uses: actions/download-artifact@v3
-        with:
-          name: nyoom-linux-amd64
-          path: build/
-      - name: Download artifact (linux/arm64)
-        uses: actions/download-artifact@v3
-        with:
-          name: nyoom-linux-arm64
-          path: build/
-      - name: Download artifact (darwin/amd64)
-        uses: actions/download-artifact@v3
-        with:
-          name: nyoom-darwin-amd64
-          path: build/
-      - name: Download artifact (darwin/arm64)
-        uses: actions/download-artifact@v3
-        with:
-          name: nyoom-darwin-arm64
-          path: build/
-      - name: Download artifact (windows/amd64)
-        uses: actions/download-artifact@v3
-        with:
-          name: nyoom-windows-amd64
-          path: build/
-      - name: Download artifact (windows/arm64)
-        uses: actions/download-artifact@v3
-        with:
-          name: nyoom-windows-arm64
-          path: build/
-
-      - name: Release
+      - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/*
           draft: false
