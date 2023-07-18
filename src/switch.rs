@@ -113,6 +113,8 @@ fn user(userchrome: &Userchrome, profile: &str, step_counter: &mut i32) -> Resul
 
 fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
     let github_regex = Regex::new(r"github:(?P<repo>([\w_-]+)/([\w_-]+))(#(?P<ref>[\w_-]+))?")?;
+    let codeberg_regex = Regex::new(r"codeberg:(?P<repo>([\w_-]+)/([\w_-]+))(#(?P<ref>[\w_-]+))?")?;
+    let gitlab_regex = Regex::new(r"gitlab:(?P<repo>[\w_-/]+)(#(?P<ref>[\w_-]+))?")?;
 
     if let Some(github) = github_regex.captures(source) {
         let ref_str = match github.name("ref") {
@@ -126,6 +128,32 @@ fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
         );
 
         utils::download_zip(&url, target_dir)?;
+    } else if let Some(codeberg) = codeberg_regex.captures(source) {
+        let ref_str = match codeberg.name("ref") {
+            Some(ref_match) => ref_match.into(),
+            None => "main",
+        };
+
+        let url = format!(
+            "https://codeberg.org/{}/archive/{}.zip",
+            &codeberg["repo"], &ref_str,
+        );
+
+        utils::download_zip(&url, target_dir)?;
+    } else if let Some(gitlab) = gitlab_regex.captures(source) {
+        let ref_str = match gitlab.name("ref") {
+            Some(ref_match) => ref_match.into(),
+            None => "main",
+        };
+
+        let url = format!(
+            "https://gitlab.com/{}/-/archive/{}/source-{}.zip",
+            &gitlab["repo"], &ref_str, &ref_str,
+        );
+
+        utils::download_zip(&url, target_dir)?;
+    } else if source.starts_with("url:") {
+        utils::download_zip(&source[4..], target_dir)?;
     }
 
     Ok(())
