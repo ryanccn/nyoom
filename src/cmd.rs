@@ -54,7 +54,8 @@ enum Commands {
     /// Generate completions
     Completions {
         /// Shell
-        shell: String,
+        #[arg(value_enum)]
+        shell: Shell,
     },
 }
 
@@ -244,24 +245,8 @@ pub fn main() -> Result<()> {
         },
 
         Commands::Completions { shell } => {
-            let generator = match shell.as_str() {
-                "bash" => Ok(Shell::Bash),
-                "zsh" => Ok(Shell::Zsh),
-                "elvish" => Ok(Shell::Elvish),
-                "fish" => Ok(Shell::Fish),
-                "pwsh" => Ok(Shell::PowerShell),
-                "powershell" => Ok(Shell::PowerShell),
-                &_ => Err(anyhow!("{} is not a valid shell", shell)),
-            }?;
-
             let cmd = &mut Cli::command();
-
-            generate(
-                generator,
-                cmd,
-                cmd.get_name().to_string(),
-                &mut io::stdout(),
-            );
+            generate(*shell, cmd, cmd.get_name().to_string(), &mut io::stdout());
 
             Ok(())
         }
