@@ -30,7 +30,7 @@ jobs:
         uses: cachix/install-nix-action@v22
 
       - name: Install Attic
-        run: nix profile install "github:zhaofengli/attic#attic-client"
+        run: nix profile install --extra-substituters "https://staging.attic.rs/attic-ci" --extra-trusted-public-keys "attic-ci:U5Sey4mUxwBXM3iFapmP0/ogODXywKLRNgRPQpEXxbo=" "github:zhaofengli/attic#attic-client"
 
       - name: Setup Attic
         run: attic login --set-default ci "$ATTIC_ENDPOINT" "$ATTIC_TOKEN"
