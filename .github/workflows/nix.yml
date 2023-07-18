@@ -30,10 +30,12 @@ jobs:
         uses: cachix/install-nix-action@v22
 
       - name: Install Attic
-        run: nix profile install --extra-substituters "https://staging.attic.rs/attic-ci" --extra-trusted-public-keys "attic-ci:U5Sey4mUxwBXM3iFapmP0/ogODXywKLRNgRPQpEXxbo=" "github:zhaofengli/attic#attic-client"
+        run: curl -fsSL "https://raw.githubusercontent.com/zhaofengli/attic/main/.github/install-attic-ci.sh" | bash
+        if: ${{ github.event_name == 'push' }}
 
       - name: Setup Attic
         run: attic login --set-default ci "$ATTIC_ENDPOINT" "$ATTIC_TOKEN"
+        if: ${{ github.event_name == 'push' }}
         env:
           ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
           ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
@@ -46,5 +48,6 @@ jobs:
 
       - name: Push to cache
         run: attic push "$ATTIC_CACHE" "$(nix eval --raw '.#nyoom')"
+        if: ${{ github.event_name == 'push' }}
         env:
           ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
