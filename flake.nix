@@ -24,17 +24,11 @@
     let
       version = builtins.substring 0 8 self.lastModifiedDate;
 
-      linux = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
+      mkSystems = fn: builtins.map fn [ "x86_64" "aarch64" ];
 
-      systems =
-        [
-          "x86_64-darwin"
-          "aarch64-darwin"
-        ]
-        ++ linux;
+      linux = mkSystems (s: "${s}-linux");
+
+      systems = (mkSystems (s: "${s}-darwin")) ++ linux;
 
       inherit (nixpkgs) lib;
 
@@ -67,6 +61,23 @@
       );
     in
     {
+      checks = forEachSystem
+        ({ pkgs
+         , system
+         , ...
+         }:
+          let
+            crane' = crane.lib.${system};
+            commonArgs = {
+              src = self;
+              cargoArtifacts = pkgs.nyoomArtifacts;
+            };
+          in
+          {
+            clippy = crane'.cargoClippy commonArgs;
+            cargofmt = crane'.cargoFmt commonArgs;
+          });
+
       devShells = forEachSystem
         ({ pkgs
          , system
@@ -112,20 +123,22 @@
                       in
                       "${cc}/bin/${cc.targetPrefix}cc";
                   in
-                  pkgs.nyoom.overrideAttrs (_:
+                  pkgs.nyoom.overrideAttrs (prev:
                     {
                       # optimize for size
-                      CARGO_BUILD_RUSTFLAGS = "-C strip=symbols -C target-feature=+crt-static -C opt-level=z -C codegen-units=1";
+                      CARGO_BUILD_RUSTFLAGS =
+                        prev.CARGO_BUILD_RUSTFLAGS + " -C target-feature=+crt-static -C opt-level=z";
                     }
                     // flags);
               }
             ));
 
-      overlays.default = _: prev:
+      overlays.default = final: prev:
         let
           crane' = crane.mkLib prev;
         in
         {
+          nyoomArtifacts = crane'.buildDepsOnly { src = self; };
           nyoom =
             let
               isLinux = builtins.elem prev.system linux;
@@ -137,7 +150,11 @@
             buildRustPackage {
               pname = "nyoom";
               inherit version;
+
               src = self;
+
+              cargoArtifacts = final.nyoomArtifacts;
+              CARGO_BUILD_RUSTFLAGS = "-C strip=symbols -C codegen-units=1";
             };
         };
     };
