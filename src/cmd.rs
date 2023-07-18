@@ -153,6 +153,7 @@ pub fn main() -> Result<()> {
 
                 let mut config = config::get_config(&cli.config)?;
 
+                config::print_userchrome(&preset, false);
                 config.userchromes.push(preset);
 
                 config::set_config(&cli.config, &config)?;

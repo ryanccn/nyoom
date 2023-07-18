@@ -64,7 +64,7 @@ pub fn get_config(path: &String) -> Result<Config> {
     }
 
     if migrated {
-        set_config(&path, &config)?;
+        set_config(path, &config)?;
     }
 
     Ok(config)
