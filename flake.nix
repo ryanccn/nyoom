@@ -3,56 +3,68 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     { self
     , nixpkgs
     , rust-overlay
-    , ...
     }:
     let
-      version = builtins.substring 0 8 self.lastModifiedDate;
+      version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
 
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
+      inherit (nixpkgs) lib;
 
-      forAllSystems = nixpkgs.lib.genAttrs systems;
+      mkSystems = sys: builtins.map (arch: "${arch}-${sys}") [ "x86_64" "aarch64" ];
+      systems = mkSystems "linux" ++ mkSystems "darwin";
+
+      forAllSystems = lib.genAttrs systems;
+
       nixpkgsFor = forAllSystems (system:
         import nixpkgs {
           inherit system;
           overlays = [ self.overlays.default rust-overlay.overlays.default ];
         });
 
-      forEachSystem = fn:
-        forAllSystems (system:
-          fn {
-            inherit system;
-            pkgs = nixpkgsFor.${system};
-          });
+      forEachSystem = fn: forAllSystems (system:
+        fn {
+          inherit system;
+          pkgs = nixpkgsFor.${system};
+        });
+
+      toolchainFor = forEachSystem (p: p.pkgs.rust-bin.stable.latest.default);
     in
     {
-      devShells = forEachSystem ({ pkgs, ... }:
+      checks = forEachSystem ({ pkgs, system }:
         let
-          inherit (pkgs) mkShell;
+          formatter = self.formatter.${system};
         in
         {
-          default = mkShell {
+          fmt = pkgs.runCommand "check-fmt" { }
+            ''
+              ${pkgs.lib.getExe formatter} --check ${self}
+              touch $out
+            '';
+        });
+
+      devShells = forEachSystem ({ pkgs, system }:
+        {
+          default = pkgs.mkShell {
             packages = with pkgs; [
-              rust-bin.stable.latest.default
               rust-analyzer
+              toolchainFor.${system}
             ];
 
             RUST_BACKTRACE = 1;
+            RUST_SRC_PATH = "${toolchainFor.${system}}/lib/rustlib/src/rust/library";
           };
         });
 
-      formatter = forEachSystem ({ pkgs, ... }: pkgs.nixpkgs-fmt);
+      formatter = forEachSystem (p: p.pkgs.nixpkgs-fmt);
 
       packages = forEachSystem ({ pkgs, ... }: {
         inherit (pkgs) nyoom;
@@ -60,18 +72,25 @@
       });
 
       overlays.default = _: prev: {
-        nyoom = prev.pkgs.rustPlatform.buildRustPackage
-          {
-            pname = "nyoom";
-            inherit version;
+        nyoom = prev.callPackage
+          ({ darwin, lib, lto ? true, optimizeSize ? true, pkg-config, rustPlatform, stdenv, self, version }:
+            rustPlatform.buildRustPackage
+              {
+                pname = "nyoom";
+                inherit version;
 
-            src = self;
+                src = self;
 
-            cargoLock.lockFile = "${self}/Cargo.lock";
+                cargoLock.lockFile = "${self}/Cargo.lock";
+                RUSTFLAGS = ""
+                  + lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"
+                  + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols";
 
-            buildInputs = with prev.pkgs; [ ] ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.Security ];
-            nativeBuildInputs = with prev.pkgs; [ pkg-config ];
-          };
+                buildInputs = [ ]
+                  ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.Security ];
+                nativeBuildInputs = [ pkg-config ];
+              })
+          { inherit self version; };
       };
     };
 }
