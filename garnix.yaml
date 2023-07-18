@@ -1,5 +1,3 @@
 builds:
-  exclude: []
   include:
-    - "checks.x86_64-linux.*"
-    - "packages.*"
+    - "packages.*.nyoom"
