@@ -4,7 +4,6 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    branches: ["main"]
 
 jobs:
   build:
@@ -32,3 +31,7 @@ jobs:
 
       - name: Build
         run: nix build ".#nyoom"
+
+      - name: Build (static)
+        if: matrix.runner == 'ubuntu-latest'
+        run: nix build '.#nyoom-static'
