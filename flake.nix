@@ -83,15 +83,15 @@
 
       overlays.default = _: prev: {
         nyoom = prev.callPackage
-          ({ darwin, lib, lto ? true, optimizeSize ? true, pkg-config, rustPlatform, stdenv, version, self }:
+          ({ darwin, lib, lto ? true, optimizeSize ? true, pkg-config, rustPlatform, self, stdenv, version }:
             rustPlatform.buildRustPackage
               {
                 pname = "nyoom";
                 inherit version;
 
-                src = lib.sourceByRegex self [ "^src" "^presets" ".*\.rs$" ".*\.toml$" "^Cargo\.toml$" "^Cargo\.lock$" ];
-                cargoLock.lockFile = ./Cargo.lock;
+                src = self;
 
+                cargoLock.lockFile = "${self}/Cargo.lock";
                 RUSTFLAGS = ""
                   + lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"
                   + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols -C opt-level=z";
