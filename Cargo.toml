@@ -15,5 +15,6 @@ regex = "1.9.1"
 reqwest = { version = "0.11.18", features = ["rustls", "blocking"] }
 rust-embed = "6.8.1"
 serde = { version = "1.0.171", features = ["derive"] }
+sysinfo = "0.29.5"
 toml = "0.7.6"
 zip = "0.6.6"

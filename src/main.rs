@@ -2,6 +2,7 @@ mod cmd;
 mod config;
 mod presets;
 mod switch;
+mod utils;
 
 use colored::*;
 
