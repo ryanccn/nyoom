@@ -3,10 +3,10 @@
 
   nixConfig = {
     extra-substituters = [
-      "https://cache.garnix.io"
+      "https://nix.ryanccn.dev/nyoom"
     ];
     extra-trusted-public-keys = [
-      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      "nyoom:I3711Q+jJWqxuAiJljlmwi/89eFY5+AdrJgoIAEyS9o="
     ];
   };
 

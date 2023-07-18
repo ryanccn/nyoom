@@ -1,0 +1,50 @@
+name: Nix
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux
+          - darwin
+        include:
+          - platform: linux
+            runner: ubuntu-latest
+          - platform: darwin
+            runner: macos-latest
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v22
+
+      - name: Install Attic
+        run: nix profile install "github:zhaofengli/attic#attic-client"
+
+      - name: Setup Attic
+        run: attic login --set-default ci "$ATTIC_ENDPOINT" "$ATTIC_TOKEN"
+        env:
+          ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
+          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+
+      - name: Check flake
+        run: nix flake check
+
+      - name: Build
+        run: nix build --accept-flake-config ".#nyoom"
+
+      - name: Push to cache
+        run: attic push "$ATTIC_CACHE" "$(nix eval --raw '.#nyoom')"
+        env:
+          ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
