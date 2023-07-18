@@ -29,25 +29,21 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v22
 
-      - name: Install Attic
-        run: curl -fsSL "https://raw.githubusercontent.com/zhaofengli/attic/main/.github/install-attic-ci.sh" | bash
-        if: ${{ github.event_name == 'push' }}
-
-      - name: Setup Attic
-        run: attic login --set-default ci "$ATTIC_ENDPOINT" "$ATTIC_TOKEN"
-        if: ${{ github.event_name == 'push' }}
-        env:
-          ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
-          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
-
       - name: Check flake
         run: nix flake check
 
       - name: Build
         run: nix build --accept-flake-config ".#nyoom"
 
+      - name: Obtain Nix path
+        id: path
+        run: echo "path=$(nix eval --raw ".#nyoom")" >> "$GITHUB_OUTPUT"
+
       - name: Push to cache
-        run: attic push "$ATTIC_CACHE" "$(nix eval --raw '.#nyoom')"
+        uses: ryanccn/attic-action@main
         if: ${{ github.event_name == 'push' }}
-        env:
-          ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
+        with:
+          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          cache: ${{ secrets.ATTIC_CACHE }}
+          token: ${{ secrets.ATTIC_TOKEN }}
+          paths: ${{ steps.path.outputs.path }}
