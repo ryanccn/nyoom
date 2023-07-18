@@ -25,7 +25,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install clippy-sarif
-        uses: cargo install clippy-sarif
+        run: cargo install clippy-sarif
 
       - name: Run clippy
         run: cargo clippy --all --all-targets --message-format=json | clippy-sarif > /tmp/clippy.sarif
