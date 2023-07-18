@@ -33,7 +33,7 @@ pub struct Config {
     pub userchromes: Vec<Userchrome>,
 }
 
-fn get_config_path() -> Result<path::PathBuf> {
+pub fn get_default_config_path() -> Result<path::PathBuf> {
     if let Some(config_dir) = dirs::config_dir() {
         Ok(config_dir.join("nyoom.toml"))
     } else {
@@ -41,31 +41,38 @@ fn get_config_path() -> Result<path::PathBuf> {
     }
 }
 
-pub fn get_config() -> Result<Config> {
-    let path = get_config_path()?;
-    let f = match path.exists() {
+pub fn get_config(path: &String) -> Result<Config> {
+    let path_t = path::Path::new(path);
+
+    let f = match path_t.exists() {
         true => fs::read_to_string(path)?,
         false => "".into(),
     };
     let mut config: Config = toml::from_str(&f)?;
+
+    let mut migrated = false;
 
     for uc in &mut config.userchromes {
         if let Some(old_clone_url) = &uc.clone_url {
             uc.source = old_clone_url
                 .replace("https://github.com/", "github:")
                 .replace(".git", "");
-            uc.clone_url = None
+            uc.clone_url = None;
+
+            migrated = true;
         }
     }
 
-    set_config(&config)?;
+    if migrated {
+        set_config(&path, &config)?;
+    }
 
     Ok(config)
 }
 
-pub fn set_config(config: &Config) -> Result<()> {
+pub fn set_config(path: &String, config: &Config) -> Result<()> {
     let serialized = toml::to_string_pretty(&config)?;
-    fs::write(get_config_path()?, serialized)?;
+    fs::write(path, serialized)?;
 
     Ok(())
 }

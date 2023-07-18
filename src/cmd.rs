@@ -11,6 +11,10 @@ use crate::{config, presets, switch};
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    /// Config file to use
+    #[arg(short, long, default_value_t = config::get_default_config_path().unwrap().display().to_string().into(), value_hint = ValueHint::FilePath)]
+    config: String,
 }
 
 #[derive(Subcommand)]
@@ -95,7 +99,7 @@ pub fn main() -> Result<()> {
 
     match &cli.command {
         Commands::List {} => {
-            let config = config::get_config()?;
+            let config = config::get_config(&cli.config)?;
             for u in config.userchromes {
                 config::print_userchrome(&u, false);
             }
@@ -104,7 +108,7 @@ pub fn main() -> Result<()> {
         }
 
         Commands::Add { name, source } => {
-            let mut config = config::get_config()?;
+            let mut config = config::get_config(&cli.config)?;
 
             let new_userchrome = config::Userchrome {
                 name: name.into(),
@@ -115,13 +119,13 @@ pub fn main() -> Result<()> {
             config::print_userchrome(&new_userchrome, false);
             config.userchromes.push(new_userchrome);
 
-            config::set_config(&config)?;
+            config::set_config(&cli.config, &config)?;
 
             Ok(())
         }
 
         Commands::Switch { name } => {
-            let config = config::get_config()?;
+            let config = config::get_config(&cli.config)?;
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
                     if config.profile.is_empty() {
@@ -147,11 +151,11 @@ pub fn main() -> Result<()> {
                     .find(|p| p.name == *name)
                     .ok_or(anyhow!("no preset named {} exists!", name))?;
 
-                let mut config = config::get_config()?;
+                let mut config = config::get_config(&cli.config)?;
 
                 config.userchromes.push(preset);
 
-                config::set_config(&config)?;
+                config::set_config(&cli.config, &config)?;
             } else {
                 presets.into_iter().for_each(|p| {
                     config::print_userchrome(&p, true);
@@ -163,11 +167,11 @@ pub fn main() -> Result<()> {
 
         Commands::Profile { path } => {
             if let Some(path) = path {
-                let mut config = config::get_config()?;
+                let mut config = config::get_config(&cli.config)?;
                 config.profile = path.to_owned();
-                config::set_config(&config)?;
+                config::set_config(&cli.config, &config)?;
             } else {
-                let config = config::get_config()?;
+                let config = config::get_config(&cli.config)?;
                 println!(
                     "{}",
                     match !config.profile.is_empty() {
@@ -182,7 +186,7 @@ pub fn main() -> Result<()> {
 
         Commands::Config { command } => match command {
             ConfigSubcommands::List { name } => {
-                let config = config::get_config()?;
+                let config = config::get_config(&cli.config)?;
                 let uc = config
                     .userchromes
                     .iter()
@@ -202,7 +206,7 @@ pub fn main() -> Result<()> {
                 value,
                 raw,
             } => {
-                let mut config = config::get_config()?;
+                let mut config = config::get_config(&cli.config)?;
                 let chrome = config
                     .userchromes
                     .iter_mut()
@@ -222,13 +226,13 @@ pub fn main() -> Result<()> {
                     });
                 }
 
-                config::set_config(&config)?;
+                config::set_config(&cli.config, &config)?;
 
                 Ok(())
             }
 
             ConfigSubcommands::Unset { name, key } => {
-                let mut config = config::get_config()?;
+                let mut config = config::get_config(&cli.config)?;
                 let chrome = config
                     .userchromes
                     .iter_mut()
@@ -241,7 +245,7 @@ pub fn main() -> Result<()> {
                     chrome.configs.remove(existing);
                 }
 
-                config::set_config(&config)?;
+                config::set_config(&cli.config, &config)?;
 
                 Ok(())
             }
