@@ -141,7 +141,7 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
 
     let mut step_counter = 1;
 
-    println!("{} cloning repository", step_counter.to_string().green());
+    println!("{} retrieving source", step_counter.to_string().green());
     step_counter += 1;
 
     handle_source(&userchrome.source, &temp_path)?;
