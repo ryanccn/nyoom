@@ -112,9 +112,10 @@ fn user(userchrome: &Userchrome, profile: &str, step_counter: &mut i32) -> Resul
 }
 
 fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
-    let github_regex = Regex::new(r"github:(?P<repo>([\w_-]+)/([\w_-]+))(#(?P<ref>[\w_-]+))?")?;
-    let codeberg_regex = Regex::new(r"codeberg:(?P<repo>([\w_-]+)/([\w_-]+))(#(?P<ref>[\w_-]+))?")?;
-    let gitlab_regex = Regex::new(r"gitlab:(?P<repo>[\w_-/]+)(#(?P<ref>[\w_-]+))?")?;
+    let github_regex = Regex::new(r"github:(?P<repo>([\w\-_]+)/([\w\-_]+))(#(?P<ref>[\w\-_]+))?")?;
+    let codeberg_regex =
+        Regex::new(r"codeberg:(?P<repo>([\w\-_]+)/([\w\-_]+))(#(?P<ref>[\w\-_]+))?")?;
+    let gitlab_regex = Regex::new(r"gitlab:(?P<repo>[\w\-_/]+)(#(?P<ref>[\w\-_]+))?")?;
 
     if let Some(github) = github_regex.captures(source) {
         let ref_str = match github.name("ref") {
