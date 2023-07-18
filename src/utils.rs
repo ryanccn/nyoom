@@ -3,7 +3,6 @@ use std::{env, fs, io::Write, path::PathBuf, process::exit};
 use anyhow::{anyhow, Result};
 use colored::*;
 use nanoid::nanoid;
-use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use zip::ZipArchive;
 
 pub fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<()> {
@@ -63,13 +62,22 @@ pub fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub fn check_firefox() -> Result<()> {
-    let s =
-        System::new_with_specifics(RefreshKind::new().with_processes(ProcessRefreshKind::new()));
-    let firefox = s.processes_by_name("firefox").count();
+pub fn check_profile(profile: &str) -> Result<()> {
+    let mut profile_contents = fs::read_dir(profile)?;
+    let is_in_use = profile_contents.any(|f| {
+        if let Ok(f) = f {
+            let file_name = f.file_name().into_string();
 
-    if firefox > 0 {
-        println!("{}", "Firefox is running, refusing to continue!".yellow());
+            if let Ok(file_name) = file_name {
+                return file_name.ends_with("shm") || file_name.ends_with("wal");
+            }
+        }
+
+        return false;
+    });
+
+    if is_in_use {
+        println!("{}", "Profile is in use, refusing to continue!".red());
         exit(1);
     }
 
