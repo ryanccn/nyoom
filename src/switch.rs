@@ -152,8 +152,8 @@ fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
         );
 
         utils::download_zip(&url, target_dir)?;
-    } else if source.starts_with("url:") {
-        utils::download_zip(&source[4..], target_dir)?;
+    } else if let Some(url) = source.strip_prefix("url:") {
+        utils::download_zip(&url, target_dir)?;
     }
 
     Ok(())

@@ -24,8 +24,16 @@ jobs:
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: clippy
-        run: cargo clippy --all --all-targets
+      - name: Install clippy-sarif
+        uses: cargo install clippy-sarif
 
-      - name: rustfmt
+      - name: Run clippy
+        run: cargo clippy --all --all-targets --message-format=json | clippy-sarif > /tmp/clippy.sarif
+
+      - name: Upload clippy results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: /tmp/clippy.sarif
+
+      - name: Run rustfmt
         run: cargo fmt --all -- --check
