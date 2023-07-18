@@ -161,7 +161,7 @@ fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
 }
 
 pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
-    utils::check_profile(&profile)?;
+    utils::check_firefox()?;
 
     print_userchrome(userchrome, false);
     println!();

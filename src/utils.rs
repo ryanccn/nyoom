@@ -1,4 +1,9 @@
-use std::{env, fs, io::Write, path::PathBuf, process::exit};
+use std::{
+    env, fs,
+    io::Write,
+    path::PathBuf,
+    process::{exit, Command},
+};
 
 use anyhow::{anyhow, Result};
 use colored::*;
@@ -63,22 +68,16 @@ pub fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub fn check_profile(profile: &str) -> Result<()> {
-    let mut profile_contents = fs::read_dir(profile)?;
-    let is_in_use = profile_contents.any(|f| {
-        if let Ok(f) = f {
-            let file_name = f.file_name().into_string();
+pub fn check_firefox() -> Result<()> {
+    let mut processes_cmd = Command::new("ps");
+    processes_cmd.args(vec!["xo", "comm="]);
+    let processes_out = String::from_utf8(processes_cmd.output()?.stdout)?;
 
-            if let Ok(file_name) = file_name {
-                return file_name.ends_with("shm") || file_name.ends_with("wal");
-            }
-        }
-
-        false
-    });
-
-    if is_in_use {
-        println!("{}", "Profile is in use, refusing to continue!".red());
+    if processes_out
+        .split('\n')
+        .any(|f| f.to_lowercase().contains("firefox"))
+    {
+        println!("{}", "Firefox is running, refusing to continue!".yellow());
         exit(1);
     }
 
