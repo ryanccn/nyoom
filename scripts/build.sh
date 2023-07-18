@@ -18,7 +18,7 @@ if [[ "$TARGET" = "aarch64-unknown-linux-"* ]]; then
     export RUSTFLAGS="$RUSTFLAGS --codegen linker=aarch64-linux-gnu-gcc"
 fi
 if [[ "$TARGET" = *"-linux-musl" ]]; then
-    apt_install musl-dev
+    apt_install musl-dev musl-tools
 fi
 
 rustup target add "$TARGET"
