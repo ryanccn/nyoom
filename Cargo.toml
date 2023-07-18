@@ -1,6 +1,6 @@
 [package]
 name = "nyoom"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 authors = ["Ryan Cao <hello@ryanccn.dev>"]
 
@@ -12,7 +12,10 @@ colored = "2.0.4"
 dirs = "5.0.1"
 nanoid = "0.4.0"
 regex = "1.9.1"
-reqwest = { version = "0.11.18", features = ["rustls", "blocking"] }
+reqwest = { version = "0.11.18", features = [
+  "rustls",
+  "blocking",
+], default_features = false }
 rust-embed = "6.8.1"
 serde = { version = "1.0.171", features = ["derive"] }
 sysinfo = "0.29.5"
