@@ -84,10 +84,13 @@
                 cargoLock.lockFile = "${self}/Cargo.lock";
                 RUSTFLAGS = ""
                   + lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"
-                  + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols";
+                  + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols -C opt-level=z";
 
                 buildInputs = [ ]
-                  ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.Security ];
+                  ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+                  CoreServices
+                  Security
+                ]);
                 nativeBuildInputs = [ pkg-config ];
               })
           { inherit self version; };
