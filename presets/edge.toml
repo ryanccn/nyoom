@@ -1,5 +1,5 @@
 name = 'edge'
-clone_url = 'https://github.com/bmFtZQ/edge-frfox.git'
+source = 'github:bmFtZQ/edge-frfox'
 
 [[configs]]
 key = 'svg.context-properties.content.enabled'

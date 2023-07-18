@@ -14,7 +14,11 @@ pub struct UserchromeConfig {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Userchrome {
     pub name: String,
-    pub clone_url: String,
+    #[serde(default)]
+    pub source: String,
+
+    /// deprecated
+    pub clone_url: Option<String>,
 
     #[serde(default)]
     pub configs: Vec<UserchromeConfig>,
@@ -43,12 +47,23 @@ pub fn get_config() -> Result<Config> {
         true => fs::read_to_string(path)?,
         false => "".into(),
     };
-    let config: Config = toml::from_str(&f)?;
+    let mut config: Config = toml::from_str(&f)?;
+
+    for uc in &mut config.userchromes {
+        if let Some(old_clone_url) = &uc.clone_url {
+            uc.source = old_clone_url
+                .replace("https://github.com/", "github:")
+                .replace(".git", "");
+            uc.clone_url = None
+        }
+    }
+
+    set_config(&config)?;
 
     Ok(config)
 }
 
-pub fn set_config(config: Config) -> Result<()> {
+pub fn set_config(config: &Config) -> Result<()> {
     let serialized = toml::to_string_pretty(&config)?;
     fs::write(get_config_path()?, serialized)?;
 
@@ -60,7 +75,7 @@ pub fn print_userchrome(userchrome: &Userchrome, short: bool) {
         "{} {} {}",
         "·".cyan(),
         userchrome.name.cyan(),
-        userchrome.clone_url.dimmed()
+        userchrome.source.dimmed()
     );
 
     let slice_len = match short {

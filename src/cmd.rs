@@ -23,7 +23,7 @@ enum Commands {
         /// Name of the userchrome
         name: String,
         /// Git clone URL
-        clone_url: String,
+        source: String,
     },
 
     /// Switch to a userchrome
@@ -99,18 +99,19 @@ pub fn main() -> Result<()> {
             Ok(())
         }
 
-        Commands::Add { name, clone_url } => {
+        Commands::Add { name, source } => {
             let mut config = config::get_config()?;
 
             let new_userchrome = config::Userchrome {
-                name: name.to_string(),
-                clone_url: clone_url.to_string(),
+                name: name.into(),
+                source: source.into(),
+                clone_url: None,
                 configs: vec![],
             };
             config::print_userchrome(&new_userchrome, false);
             config.userchromes.push(new_userchrome);
 
-            config::set_config(config)?;
+            config::set_config(&config)?;
 
             Ok(())
         }
@@ -146,7 +147,7 @@ pub fn main() -> Result<()> {
 
                 config.userchromes.push(preset);
 
-                config::set_config(config)?;
+                config::set_config(&config)?;
             } else {
                 presets.into_iter().for_each(|p| {
                     config::print_userchrome(&p, true);
@@ -160,7 +161,7 @@ pub fn main() -> Result<()> {
             if let Some(path) = path {
                 let mut config = config::get_config()?;
                 config.profile = path.to_owned();
-                config::set_config(config)?;
+                config::set_config(&config)?;
             } else {
                 let config = config::get_config()?;
                 println!(
@@ -217,7 +218,7 @@ pub fn main() -> Result<()> {
                     });
                 }
 
-                config::set_config(config)?;
+                config::set_config(&config)?;
 
                 Ok(())
             }
@@ -236,7 +237,7 @@ pub fn main() -> Result<()> {
                     chrome.configs.remove(existing);
                 }
 
-                config::set_config(config)?;
+                config::set_config(&config)?;
 
                 Ok(())
             }

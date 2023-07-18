@@ -1,12 +1,15 @@
 use anyhow::{anyhow, Result};
 use std::{
     env, fs,
+    io::Write,
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
 use colored::*;
 use nanoid::nanoid;
+use regex::Regex;
+use zip::ZipArchive;
 
 use crate::config::{print_userchrome, Userchrome, UserchromeConfig};
 
@@ -123,6 +126,67 @@ fn user(userchrome: &Userchrome, profile: &str, step_counter: &mut i32) -> Resul
     Ok(())
 }
 
+fn handle_source_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
+    let mut resp = reqwest::blocking::get(url)?;
+    resp = resp.error_for_status()?;
+
+    let bytes = resp.bytes()?;
+    let temp_download_path = env::temp_dir().join(nanoid!() + ".zip");
+    let temp_extract_path = env::temp_dir().join(nanoid!());
+
+    let mut out_file = fs::File::create(&temp_download_path)?;
+    out_file.write_all(&bytes)?;
+
+    let in_file = fs::File::open(&temp_download_path)?;
+
+    let mut zip = ZipArchive::new(in_file)?;
+    fs::create_dir(&temp_extract_path)?;
+    zip.extract(&temp_extract_path)?;
+
+    let extracted_contents = fs::read_dir(&temp_extract_path)?;
+
+    let mut extracted_contents_size = 0;
+    let mut extracted_contents_last_path: Option<PathBuf> = None;
+    for f in extracted_contents {
+        extracted_contents_last_path = f?.path().into();
+        extracted_contents_size += 1;
+    }
+
+    if extracted_contents_size == 1 {
+        copy_dir_all(
+            &extracted_contents_last_path.ok_or(anyhow!(""))?,
+            &target_dir,
+        )?;
+    } else {
+        copy_dir_all(&temp_extract_path, &target_dir)?;
+    }
+
+    fs::remove_file(&temp_download_path)?;
+    fs::remove_dir_all(&temp_extract_path)?;
+
+    Ok(())
+}
+
+fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
+    let github_regex = Regex::new(r"github:(?P<repo>([\w_-]+)/([\w_-]+))(#(?P<ref>[\w_-]+))?")?;
+
+    if let Some(github) = github_regex.captures(source) {
+        let ref_str = match github.name("ref") {
+            Some(ref_match) => ref_match.into(),
+            None => "main",
+        };
+
+        let url = format!(
+            "https://github.com/{}/archive/refs/heads/{}.zip",
+            &github["repo"], &ref_str,
+        );
+
+        handle_source_zip(&url, &target_dir)?;
+    }
+
+    Ok(())
+}
+
 pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     print_userchrome(userchrome, false);
     println!();
@@ -134,20 +198,7 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     println!("{} cloning repository", step_counter.to_string().green());
     step_counter += 1;
 
-    let mut clone_cmd = Command::new("git");
-    clone_cmd.args([
-        "clone",
-        "--depth=1",
-        &userchrome.clone_url,
-        temp_path
-            .to_str()
-            .ok_or(anyhow!("could not obtain temp path"))?,
-    ]);
-    clone_cmd.stdin(Stdio::null());
-    clone_cmd.stdout(Stdio::null());
-    clone_cmd.stderr(Stdio::null());
-
-    clone_cmd.status()?;
+    handle_source(&userchrome.source, &temp_path)?;
 
     println!("{} installing userchrome", step_counter.to_string().green());
     step_counter += 1;

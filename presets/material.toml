@@ -1,5 +1,5 @@
 name = 'material'
-clone_url = 'https://github.com/muckSponge/MaterialFox.git'
+source = 'github:muckSponge/MaterialFox'
 
 [[configs]]
 key = 'browser.tabs.tabClipWidth'
