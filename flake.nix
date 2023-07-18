@@ -1,6 +1,16 @@
 {
   description = "A small CLI Firefox userchrome manager";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://cache.garnix.io"
+    ];
+    extra-trusted-public-keys = [
+      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+    ];
+  };
+
+
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
     rust-overlay = {
