@@ -45,7 +45,10 @@ enum Commands {
         path: Option<String>,
     },
 
-    /// Manage userchrome-linked configs
+    #[command(
+        about = "Manage userchrome-linked configs",
+        long_about = "\x1B[36;1mnyoom · Firefox userchrome manager\x1B[0m\nManage userchrome-linked configs"
+    )]
     Config {
         #[command(subcommand)]
         command: ConfigSubcommands,
