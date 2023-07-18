@@ -41,7 +41,7 @@ enum Commands {
     /// Configure Firefox profile or get current directory
     Profile {
         /// Path to the profile
-        #[arg(short, long, value_hint = ValueHint::DirPath)]
+        #[arg(value_hint = ValueHint::DirPath)]
         path: Option<String>,
     },
 
