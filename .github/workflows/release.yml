@@ -9,70 +9,18 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        target:
-          - "x86_64-unknown-linux-gnu"
-          - "aarch64-unknown-linux-gnu"
-          - "x86_64-unknown-linux-musl"
-          - "aarch64-unknown-linux-musl"
-          - "x86_64-pc-windows-msvc"
-          # - "aarch64-pc-windows-msvc"
-          - "x86_64-apple-darwin"
-          - "aarch64-apple-darwin"
-        include:
-          - target: "x86_64-unknown-linux-gnu"
-            runner: ubuntu-latest
-          - target: "aarch64-unknown-linux-gnu"
-            runner: ubuntu-latest
-          - target: "x86_64-unknown-linux-musl"
-            runner: ubuntu-latest
-          - target: "aarch64-unknown-linux-musl"
-            runner: ubuntu-latest
-          - target: "x86_64-pc-windows-msvc"
-            runner: windows-latest
-          # - target: "aarch64-pc-windows-msvc"
-          #   runner: windows-latest
-          - target: "x86_64-apple-darwin"
-            runner: macos-latest
-          - target: "aarch64-apple-darwin"
-            runner: macos-latest
-
-    runs-on: ${{ matrix.runner }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-
-      - name: Setup Rust cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Build
-        id: build
-        run: ./scripts/build.sh
-        shell: bash
-        env:
-          TARGET: ${{ matrix.target }}
-
-      - name: Upload to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ steps.build.outputs.path }}
-          draft: true
-
+    uses: ./.github/workflows/build.yml
+    
   publish:
     needs: ["build"]
     runs-on: ubuntu-latest
 
     steps:
-      - name: Publish release
-        run: gh release --repo="${{ github.repository }}" edit ${{ github.ref_name }} --draft=false
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*
