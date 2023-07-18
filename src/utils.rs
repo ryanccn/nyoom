@@ -74,7 +74,7 @@ pub fn check_profile(profile: &str) -> Result<()> {
             }
         }
 
-        return false;
+        false
     });
 
     if is_in_use {
