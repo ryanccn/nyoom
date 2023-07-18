@@ -49,7 +49,8 @@ pub fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
 
     if extracted_contents_size == 1 {
         copy_dir_all(
-            &extracted_contents_last_path.ok_or(anyhow!(""))?,
+            &extracted_contents_last_path
+                .ok_or(anyhow!("could not find path in unpacked directory"))?,
             target_dir,
         )?;
     } else {

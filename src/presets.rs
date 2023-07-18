@@ -13,7 +13,10 @@ pub fn get_presets() -> Result<Vec<Userchrome>> {
         .map(|f| -> Result<Userchrome> {
             Ok(toml::from_str(&String::from_utf8(
                 Presets::get(&f)
-                    .ok_or(anyhow!("this isn't supposed to happen"))?
+                    .ok_or(anyhow!(
+                        "preset {} not found despite it being returned from iterator",
+                        f
+                    ))?
                     .data
                     .into_owned(),
             )?)?)
