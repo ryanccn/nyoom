@@ -30,7 +30,7 @@ jobs:
         uses: cachix/install-nix-action@v22
 
       - name: Push to cache
-        uses: ryanccn/attic-action@main
+        uses: ryanccn/attic-action@v0
         if: ${{ github.event_name == 'push' }}
         with:
           endpoint: ${{ secrets.ATTIC_ENDPOINT }}
