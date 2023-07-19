@@ -83,7 +83,7 @@
 
       overlays.default = _: prev: {
         nyoom = prev.callPackage
-          ({ darwin, lib, lto ? true, optimizeSize ? true, pkg-config, rustPlatform, stdenv, version, self }:
+          ({ libiconv, darwin, lib, lto ? true, optimizeSize ? true, pkg-config, rustPlatform, stdenv, version, self }:
             rustPlatform.buildRustPackage
               {
                 pname = "nyoom";
@@ -97,11 +97,13 @@
                   + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols -C opt-level=z";
 
                 buildInputs = [ ]
-                  ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
-                  CoreServices
-                  CoreFoundation
-                  Security
-                ]);
+                  ++ lib.optionals stdenv.isDarwin [
+                  darwin.apple_sdk.frameworks.CoreFoundation
+                  darwin.apple_sdk.frameworks.Security
+                  darwin.IOKit
+                  libiconv
+                ];
+
                 nativeBuildInputs = [ pkg-config ];
               })
           { inherit self version; };
