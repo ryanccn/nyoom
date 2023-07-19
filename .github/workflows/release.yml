@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
     uses: ./.github/workflows/build.yml
-    
+
   publish:
     needs: ["build"]
     runs-on: ubuntu-latest
@@ -23,4 +23,4 @@ jobs:
       - name: Upload to release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/*
+          files: artifacts/**/*
