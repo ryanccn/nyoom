@@ -29,21 +29,16 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v22
 
-      - name: Check flake
-        run: nix flake check
-
-      - name: Build
-        run: nix build --accept-flake-config ".#nyoom"
-
-      - name: Obtain Nix path
-        id: path
-        run: echo "path=$(nix eval --raw ".#nyoom")" >> "$GITHUB_OUTPUT"
-
       - name: Push to cache
-        uses: ryanccn/attic-action@main
+        uses: ryanccn/attic-action@v0
         if: ${{ github.event_name == 'push' }}
         with:
           endpoint: ${{ secrets.ATTIC_ENDPOINT }}
           cache: ${{ secrets.ATTIC_CACHE }}
           token: ${{ secrets.ATTIC_TOKEN }}
-          paths: ${{ steps.path.outputs.path }}
+
+      - name: Check flake
+        run: nix flake check
+
+      - name: Build
+        run: nix build --accept-flake-config ".#nyoom"
