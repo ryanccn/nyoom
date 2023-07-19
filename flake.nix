@@ -99,6 +99,7 @@
                 buildInputs = [ ]
                   ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
                   CoreServices
+                  CoreFoundation
                   Security
                 ]);
                 nativeBuildInputs = [ pkg-config ];
