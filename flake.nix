@@ -19,6 +19,7 @@
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
   };
 
@@ -81,7 +82,7 @@
       };
     });
 
-    formatter = forEachSystem (p: p.pkgs.nixpkgs-fmt);
+    formatter = forEachSystem (p: p.pkgs.alejandra);
 
     packages = forEachSystem ({pkgs, ...}: {
       inherit (pkgs) nyoom;
