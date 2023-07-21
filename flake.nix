@@ -15,12 +15,15 @@
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
+      inputs.flake-utils.follows = "flake-utils";
     };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
@@ -101,16 +104,17 @@
           pkg-config,
           rustPlatform,
           stdenv,
-          version,
           system,
           self,
         }:
           rustPlatform.buildRustPackage
-          {
+          (let
+            craneLib = crane.lib.${system};
+          in {
             pname = "nyoom";
             inherit version;
 
-            src = crane.lib.${system}.cleanCargoSource ./.;
+            src = craneLib.cleanCargoSource ./.;
             cargoLock.lockFile = ./Cargo.lock;
 
             RUSTFLAGS =
@@ -127,9 +131,11 @@
                 libiconv
               ];
 
+            postBuild = '''';
+
             nativeBuildInputs = [pkg-config];
           })
-        {inherit self version;};
+          {inherit self version;});
     };
   };
 }
