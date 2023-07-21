@@ -31,6 +31,7 @@
     nixpkgs,
     rust-overlay,
     crane,
+    ...
   }: let
     version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
 
@@ -104,17 +105,16 @@
           pkg-config,
           rustPlatform,
           stdenv,
+          version,
           system,
           self,
         }:
           rustPlatform.buildRustPackage
-          (let
-            craneLib = crane.lib.${system};
-          in {
+          {
             pname = "nyoom";
             inherit version;
 
-            src = craneLib.cleanCargoSource ./.;
+            src = crane.lib.${system}.cleanCargoSource ./.;
             cargoLock.lockFile = ./Cargo.lock;
 
             RUSTFLAGS =
@@ -131,11 +131,9 @@
                 libiconv
               ];
 
-            postBuild = '''';
-
             nativeBuildInputs = [pkg-config];
           })
-          {inherit self version;});
+        {inherit self version;};
     };
   };
 }
