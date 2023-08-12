@@ -104,13 +104,14 @@
           optimizeSize ? true,
           pkg-config,
           rustPlatform,
+          installShellFiles,
           stdenv,
           version,
           system,
           self,
         }:
           rustPlatform.buildRustPackage
-          {
+          rec {
             pname = "nyoom";
             inherit version;
 
@@ -131,7 +132,21 @@
                 libiconv
               ];
 
-            nativeBuildInputs = [pkg-config];
+            nativeBuildInputs = [
+              pkg-config
+              installShellFiles
+            ];
+
+            postInstall = ''
+              tmp="$TMPDIR/nyoom-nix-completions"
+              mkdir -p "$tmp"
+
+              "$out/bin/${pname}" completions bash > "$tmp/nyoom.bash"
+              "$out/bin/${pname}" completions zsh > "$tmp/nyoom.zsh"
+              "$out/bin/${pname}" completions fish > "$tmp/nyoom.fish"
+
+              installShellCompletion "$tmp/nyoom.bash" "$tmp/nyoom.zsh" "$tmp/nyoom.fish"
+            '';
           })
         {inherit self version;};
     };
