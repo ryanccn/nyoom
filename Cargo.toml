@@ -17,7 +17,7 @@ reqwest = { version = "0.11.18", features = [
   "blocking",
 ], default-features = false }
 rust-embed = "6.8.1"
-serde = { version = "1.0.171", features = ["derive"] }
+serde = { version = "1.0.179", features = ["derive"] }
 sysinfo = "0.29.8"
 toml = "0.7.6"
 zip = "0.6.6"
