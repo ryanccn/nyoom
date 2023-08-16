@@ -97,11 +97,11 @@
       nyoom =
         prev.callPackage
         ({
+          lto ? true,
+          optimizeSize ? true,
           libiconv,
           darwin,
           lib,
-          lto ? true,
-          optimizeSize ? true,
           pkg-config,
           rustPlatform,
           installShellFiles,
@@ -138,15 +138,18 @@
             ];
 
             postInstall = ''
-              tmp="$TMPDIR/nyoom-nix-completions"
-              mkdir -p "$tmp"
-
-              "$out/bin/${pname}" completions bash > "$tmp/nyoom.bash"
-              "$out/bin/${pname}" completions zsh > "$tmp/nyoom.zsh"
-              "$out/bin/${pname}" completions fish > "$tmp/nyoom.fish"
-
-              installShellCompletion "$tmp/nyoom.bash" "$tmp/nyoom.zsh" "$tmp/nyoom.fish"
+              installShellCompletion --cmd nyoom \
+                --bash <("$out/bin/${pname}" completions bash) \
+                --zsh <("$out/bin/${pname}" completions zsh) \
+                --fish <("$out/bin/${pname}" completions fish)
             '';
+
+            meta = with lib; {
+              description = "A small CLI Firefox userchrome manager";
+              maintainers = with maintainers; [ryanccn];
+              license = licenses.gpl3Only;
+              mainProgram = "nyoom";
+            };
           })
         {inherit self version;};
     };
