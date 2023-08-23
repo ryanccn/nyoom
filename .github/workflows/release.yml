@@ -24,3 +24,19 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: artifacts/**/*
+
+  flake:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Push to FlakeHub
+        uses: DeterminateSystems/flakehub-push@main
+        with:
+          visibility: public
