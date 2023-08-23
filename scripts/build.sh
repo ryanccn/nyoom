@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eo pipefail
 
-print_command() {
-    echo -e "\033[2m\$ $*\033[0m"
+exec_print() {
+    echo -e "\033[2m\$\033[0m $*"
+    "$@"
 }
 
 apt_updated=""
@@ -12,8 +13,7 @@ apt_install() {
         apt_updated="y"
     fi
 
-    print_command "sudo apt-get install $*"
-    sudo apt-get install "$@"
+    exec_print sudo apt-get install "$@"
 }
 
 export RUSTFLAGS="-C lto=thin -C embed-bitcode=yes -C strip=symbols -C codegen-units=1 -C opt-level=z"
@@ -35,15 +35,15 @@ fi
 
 echo -e "\033[2m>\033[0m RUSTFLAGS=\033[36m\"$RUSTFLAGS\"\033[0m"
 
-print_command "cargo build -r --target $TARGET --locked"
-cargo build -r --target "$TARGET" --locked
+exec_print cargo build -r --target "$TARGET" --locked
 
-artifact_suffix=""
-[[ "$TARGET" == *"windows"* ]] && artifact_suffix=".exe"
-[[ "$TARGET" == *"musl" ]] && artifact_suffix="-static"
+result_suffix=""
+artifact_basename_suffix=""
+[[ "$TARGET" == *"windows"* ]] && result_suffix=".exe"
+[[ "$TARGET" == *"musl" ]] && artifact_basename_suffix="-static"
 
-artifact_path="target/$TARGET/release/nyoom-$TARGET$artifact_suffix"
+result_path="nyoom-$TARGET$artifact_basename_suffix$result_suffix"
 
-cp "target/$TARGET/release/nyoom$artifact_suffix" "$artifact_path"
+exec_print cp "target/$TARGET/release/nyoom$result_suffix" "$result_path"
 
-[ -f "$GITHUB_OUTPUT" ] && echo "path=$artifact_path" >> "$GITHUB_OUTPUT"
+[ -f "$GITHUB_OUTPUT" ] && echo "path=$result_path" >> "$GITHUB_OUTPUT"
