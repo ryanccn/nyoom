@@ -120,7 +120,7 @@
 
             RUSTFLAGS =
               ""
-              + lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"
+              + lib.optionalString lto " -C lto=fat -C embed-bitcode=yes"
               + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols -C opt-level=z";
 
             buildInputs =

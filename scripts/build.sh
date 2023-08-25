@@ -16,7 +16,7 @@ apt_install() {
     exec_print sudo apt-get install "$@"
 }
 
-export RUSTFLAGS="-C lto=thin -C embed-bitcode=yes -C strip=symbols -C codegen-units=1 -C opt-level=z"
+export RUSTFLAGS="-C lto=fat -C embed-bitcode=yes -C strip=symbols -C codegen-units=1 -C opt-level=z"
 
 if [[ "$TARGET" = "aarch64-unknown-linux-"* ]]; then
     apt_install gcc-aarch64-linux-gnu
