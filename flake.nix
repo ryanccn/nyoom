@@ -12,56 +12,28 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
-      inputs.flake-utils.follows = "flake-utils";
-    };
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
     self,
     nixpkgs,
-    rust-overlay,
-    crane,
     ...
   }: let
     version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
 
     inherit (nixpkgs) lib;
 
-    mkSystems = sys: builtins.map (arch: "${arch}-${sys}") ["x86_64" "aarch64"];
-    systems = mkSystems "linux" ++ mkSystems "darwin";
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
 
-    forAllSystems = lib.genAttrs systems;
-
-    nixpkgsFor = forAllSystems (system:
-      import nixpkgs {
-        inherit system;
-        overlays = [self.overlays.default rust-overlay.overlays.default];
-      });
-
-    forEachSystem = fn:
-      forAllSystems (system:
-        fn {
-          inherit system;
-          pkgs = nixpkgsFor.${system};
-        });
-
-    toolchainFor = forEachSystem (p: p.pkgs.rust-bin.stable.latest.default);
+    forAllSystems = fn: lib.genAttrs systems (s: fn nixpkgs.legacyPackages.${s});
   in {
-    checks = forEachSystem ({
-      pkgs,
-      system,
-    }: let
-      formatter = self.formatter.${system};
+    checks = forAllSystems (pkgs: let
+      formatter = self.formatter.${pkgs.system};
     in {
       fmt =
         pkgs.runCommand "check-fmt" {}
@@ -71,87 +43,37 @@
         '';
     });
 
-    devShells = forEachSystem ({
-      pkgs,
-      system,
-    }: {
+    devShells = forAllSystems (pkgs: {
       default = pkgs.mkShell {
         packages = with pkgs; [
           rust-analyzer
-          toolchainFor.${system}
+          rustc
+          cargo
+          rustfmt
         ];
 
         RUST_BACKTRACE = 1;
-        RUST_SRC_PATH = "${toolchainFor.${system}}/lib/rustlib/src/rust/library";
+        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
       };
     });
 
-    formatter = forEachSystem (p: p.pkgs.alejandra);
+    packages = forAllSystems (
+      pkgs: let
+        scope = lib.makeScope pkgs.newScope;
+        fn = final: {p = self.overlays.default final pkgs;};
+        inherit (scope fn) p;
+      in
+        p // {default = p.nyoom;}
+    );
 
-    packages = forEachSystem ({pkgs, ...}: {
-      inherit (pkgs) nyoom;
-      default = pkgs.nyoom;
-    });
+    formatter = forAllSystems (p: p.alejandra);
 
     overlays.default = _: prev: {
-      nyoom =
-        prev.callPackage
-        ({
-          lto ? true,
-          optimizeSize ? true,
-          libiconv,
-          darwin,
-          lib,
-          pkg-config,
-          rustPlatform,
-          installShellFiles,
-          stdenv,
-          version,
-          system,
-          self,
-        }:
-          rustPlatform.buildRustPackage
-          rec {
-            pname = "nyoom";
-            inherit version;
-
-            src = crane.lib.${system}.cleanCargoSource ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-
-            RUSTFLAGS =
-              ""
-              + lib.optionalString lto " -C lto=fat -C embed-bitcode=yes"
-              + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols -C opt-level=z";
-
-            buildInputs =
-              []
-              ++ lib.optionals stdenv.isDarwin [
-                darwin.apple_sdk_11_0.frameworks.CoreFoundation
-                darwin.apple_sdk_11_0.frameworks.Security
-                darwin.IOKit
-                libiconv
-              ];
-
-            nativeBuildInputs = [
-              pkg-config
-              installShellFiles
-            ];
-
-            postInstall = ''
-              installShellCompletion --cmd nyoom \
-                --bash <("$out/bin/${pname}" completions bash) \
-                --zsh <("$out/bin/${pname}" completions zsh) \
-                --fish <("$out/bin/${pname}" completions fish)
-            '';
-
-            meta = with lib; {
-              description = "A small CLI Firefox userchrome manager";
-              maintainers = with maintainers; [ryanccn];
-              license = licenses.gpl3Only;
-              mainProgram = "nyoom";
-            };
-          })
-        {inherit self version;};
+      nyoom = prev.callPackage ./default.nix {
+        inherit self version;
+        inherit (prev.darwin.apple_sdk_11_0.frameworks) CoreFoundation Security;
+        inherit (prev.darwin) IOKit;
+      };
     };
   };
 }
