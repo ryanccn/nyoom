@@ -77,6 +77,18 @@ pub fn set_config(path: &String, config: &Config) -> Result<()> {
     Ok(())
 }
 
+pub fn format_userchrome_config(c: &UserchromeConfig) -> String {
+    format!(
+        "{}: {}{}",
+        c.key.magenta(),
+        c.value,
+        match c.raw {
+            true => " (raw)".dimmed(),
+            false => "".into(),
+        }
+    )
+}
+
 pub fn print_userchrome(userchrome: &Userchrome, short: bool) {
     println!(
         "{} {} {}",
@@ -91,21 +103,13 @@ pub fn print_userchrome(userchrome: &Userchrome, short: bool) {
     };
 
     for c in &userchrome.configs[..slice_len] {
-        println!(
-            "   {}: {}{}",
-            c.key.magenta(),
-            c.value,
-            match c.raw {
-                true => " (raw)".dimmed(),
-                false => "".into(),
-            }
-        );
+        println!("    {}", format_userchrome_config(c));
     }
 
     if short && userchrome.configs.len() > 3 {
         println!(
             "{}",
-            format!("   and {} more", userchrome.configs.len() - 3).dimmed()
+            format!("    and {} more", userchrome.configs.len() - 3).dimmed()
         );
     }
 }

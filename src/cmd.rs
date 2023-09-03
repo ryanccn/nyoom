@@ -49,10 +49,7 @@ enum Commands {
         path: Option<String>,
     },
 
-    #[command(
-        about = "Manage userchrome-linked configs",
-        long_about = "\x1B[36;1mnyoom · Firefox userchrome manager\x1B[0m\nManage userchrome-linked configs"
-    )]
+    /// Manage userchrome-linked configs
     Config {
         #[command(subcommand)]
         command: ConfigSubcommands,
@@ -195,7 +192,7 @@ pub fn main() -> Result<()> {
                     .ok_or(anyhow!("no userchrome with name {} exists", name))?;
 
                 for c in &uc.configs {
-                    println!("{} = {} (raw: {})", c.key, c.value, c.raw);
+                    println!("{}", config::format_userchrome_config(&c));
                 }
 
                 Ok(())
