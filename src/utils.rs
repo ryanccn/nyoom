@@ -67,7 +67,7 @@ pub fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
 pub fn check_firefox() -> Result<()> {
     let system =
         System::new_with_specifics(RefreshKind::new().with_processes(ProcessRefreshKind::new()));
-    let is_running = system.processes().into_iter().any(|f| {
+    let is_running = system.processes().iter().any(|f| {
         let cmd = f.1.cmd().get(0);
 
         if let Some(cmd) = cmd {

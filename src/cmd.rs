@@ -192,7 +192,7 @@ pub fn main() -> Result<()> {
                     .ok_or(anyhow!("no userchrome with name {} exists", name))?;
 
                 for c in &uc.configs {
-                    println!("{}", config::format_userchrome_config(&c));
+                    println!("{}", config::format_userchrome_config(c));
                 }
 
                 Ok(())
