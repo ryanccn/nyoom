@@ -3,7 +3,7 @@ use std::{env, fs, io::Write, path::PathBuf, process::exit};
 use anyhow::{anyhow, Result};
 use colored::*;
 use nanoid::nanoid;
-use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use zip::ZipArchive;
 
 pub fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<()> {
@@ -67,15 +67,7 @@ pub fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
 pub fn check_firefox() -> Result<()> {
     let system =
         System::new_with_specifics(RefreshKind::new().with_processes(ProcessRefreshKind::new()));
-    let is_running = system.processes().iter().any(|f| {
-        let cmd = f.1.cmd().get(0);
-
-        if let Some(cmd) = cmd {
-            return cmd.to_lowercase().contains("firefox");
-        }
-
-        false
-    });
+    let is_running = system.processes_by_name("firefox").count() != 0;
 
     if is_running {
         println!("{}", "Firefox is running, refusing to continue!".yellow());

@@ -9,12 +9,17 @@ exec_print() {
 apt_updated=""
 apt_install() {
     if [ ! "$apt_updated" ]; then
-        sudo apt-get update
+        exec_print sudo apt-get update
         apt_updated="y"
     fi
 
     exec_print sudo apt-get install "$@"
 }
+
+if [[ -z "$TARGET" ]]; then
+    echo -e "\033[31mNo TARGET provided! Exiting.\033[0m"
+    exit 1
+fi
 
 export RUSTFLAGS="-C lto=fat -C embed-bitcode=yes -C strip=symbols -C codegen-units=1 -C opt-level=z"
 
