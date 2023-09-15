@@ -91,12 +91,12 @@ enum ConfigSubcommands {
     },
 }
 
-pub fn main() -> Result<()> {
+pub async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::List {} => {
-            let config = config::get_config(&cli.config)?;
+            let config = config::get_config(&cli.config).await?;
             for u in config.userchromes {
                 config::print_userchrome(&u, false);
             }
@@ -105,7 +105,7 @@ pub fn main() -> Result<()> {
         }
 
         Commands::Add { name, source } => {
-            let mut config = config::get_config(&cli.config)?;
+            let mut config = config::get_config(&cli.config).await?;
 
             let new_userchrome = config::Userchrome {
                 name: name.into(),
@@ -116,20 +116,20 @@ pub fn main() -> Result<()> {
             config::print_userchrome(&new_userchrome, false);
             config.userchromes.push(new_userchrome);
 
-            config::set_config(&cli.config, &config)?;
+            config::set_config(&cli.config, &config).await?;
 
             Ok(())
         }
 
         Commands::Switch { name } => {
-            let config = config::get_config(&cli.config)?;
+            let config = config::get_config(&cli.config).await?;
             match config.userchromes.iter().find(|c| c.name.eq(name)) {
                 Some(u) => {
                     if config.profile.is_empty() {
                         return Err(anyhow!("no profile configured"));
                     }
 
-                    switch::switch(u, config.profile)?;
+                    switch::switch(u, config.profile).await?;
                 }
                 None => {
                     return Err(anyhow!("no userchrome with name {} found!", name));
@@ -148,12 +148,12 @@ pub fn main() -> Result<()> {
                     .find(|p| p.name == *name)
                     .ok_or(anyhow!("no preset named {} exists!", name))?;
 
-                let mut config = config::get_config(&cli.config)?;
+                let mut config = config::get_config(&cli.config).await?;
 
                 config::print_userchrome(&preset, false);
                 config.userchromes.push(preset);
 
-                config::set_config(&cli.config, &config)?;
+                config::set_config(&cli.config, &config).await?;
             } else {
                 presets.into_iter().for_each(|p| {
                     config::print_userchrome(&p, true);
@@ -165,11 +165,11 @@ pub fn main() -> Result<()> {
 
         Commands::Profile { path } => {
             if let Some(path) = path {
-                let mut config = config::get_config(&cli.config)?;
+                let mut config = config::get_config(&cli.config).await?;
                 config.profile = path.to_owned();
-                config::set_config(&cli.config, &config)?;
+                config::set_config(&cli.config, &config).await?;
             } else {
-                let config = config::get_config(&cli.config)?;
+                let config = config::get_config(&cli.config).await?;
                 println!(
                     "{}",
                     match !config.profile.is_empty() {
@@ -184,7 +184,7 @@ pub fn main() -> Result<()> {
 
         Commands::Config { command } => match command {
             ConfigSubcommands::List { name } => {
-                let config = config::get_config(&cli.config)?;
+                let config = config::get_config(&cli.config).await?;
                 let uc = config
                     .userchromes
                     .iter()
@@ -204,7 +204,7 @@ pub fn main() -> Result<()> {
                 value,
                 raw,
             } => {
-                let mut config = config::get_config(&cli.config)?;
+                let mut config = config::get_config(&cli.config).await?;
                 let chrome = config
                     .userchromes
                     .iter_mut()
@@ -224,13 +224,13 @@ pub fn main() -> Result<()> {
                     });
                 }
 
-                config::set_config(&cli.config, &config)?;
+                config::set_config(&cli.config, &config).await?;
 
                 Ok(())
             }
 
             ConfigSubcommands::Unset { name, key } => {
-                let mut config = config::get_config(&cli.config)?;
+                let mut config = config::get_config(&cli.config).await?;
                 let chrome = config
                     .userchromes
                     .iter_mut()
@@ -243,7 +243,7 @@ pub fn main() -> Result<()> {
                     chrome.configs.remove(existing);
                 }
 
-                config::set_config(&cli.config, &config)?;
+                config::set_config(&cli.config, &config).await?;
 
                 Ok(())
             }

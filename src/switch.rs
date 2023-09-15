@@ -1,12 +1,13 @@
 use anyhow::{anyhow, Result};
 use std::{
-    env, fs,
+    env,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::Stdio,
 };
+use tokio::{fs, process::Command};
 
-use colored::*;
 use nanoid::nanoid;
+use owo_colors::OwoColorize;
 use regex::Regex;
 
 use crate::{
@@ -14,7 +15,7 @@ use crate::{
     utils,
 };
 
-fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) -> Result<()> {
+async fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) -> Result<()> {
     let suffix = match env::consts::OS {
         "windows" => ".bat",
         &_ => ".sh",
@@ -37,7 +38,7 @@ fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) -> Result<()>
     cmd.stdout(Stdio::null());
     cmd.stderr(Stdio::null());
 
-    cmd.status()?;
+    cmd.status().await?;
 
     Ok(())
 }
@@ -45,8 +46,8 @@ fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) -> Result<()>
 const START_LINE: &str = "/** nyoom-managed config; do not edit */";
 const END_LINE: &str = "/** end of nyoom-managed config */";
 
-fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
-    let contents = fs::read_to_string(&f).unwrap_or("".to_owned());
+async fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
+    let contents = fs::read_to_string(&f).await.unwrap_or("".to_owned());
     let lines: Vec<String> = contents.split('\n').map(|a| a.to_owned()).collect();
 
     let mut new_lines = vec![
@@ -88,30 +89,30 @@ fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
         ret_lines.push("".to_owned());
     }
 
-    fs::write(&f, ret_lines.join("\n"))?;
+    fs::write(&f, ret_lines.join("\n")).await?;
 
     Ok(())
 }
 
-fn user(userchrome: &Userchrome, profile: &str, step_counter: &mut i32) -> Result<()> {
+async fn user(userchrome: &Userchrome, profile: &str, step_counter: &mut i32) -> Result<()> {
     let arkenfox = Path::new(&profile).join("user-overrides.js").exists();
 
     if arkenfox {
-        patch_user_file(userchrome, Path::new(&profile).join("user-overrides.js"))?;
+        patch_user_file(userchrome, Path::new(&profile).join("user-overrides.js")).await?;
 
         println!("{} updating arkenfox", step_counter.to_string().green());
         *step_counter += 1;
 
-        run_arkenfox_script(profile, "updater", vec!["-s"])?;
-        run_arkenfox_script(profile, "prefsCleaner", vec!["-s"])?;
+        run_arkenfox_script(profile, "updater", vec!["-s"]).await?;
+        run_arkenfox_script(profile, "prefsCleaner", vec!["-s"]).await?;
     } else {
-        patch_user_file(userchrome, Path::new(&profile).join("user.js"))?;
+        patch_user_file(userchrome, Path::new(&profile).join("user.js")).await?;
     }
 
     Ok(())
 }
 
-fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
+async fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
     let github_regex = Regex::new(r"github:(?P<repo>([\w\-_]+)/([\w\-_]+))(#(?P<ref>[\w\-_]+))?")?;
     let codeberg_regex =
         Regex::new(r"codeberg:(?P<repo>([\w\-_]+)/([\w\-_]+))(#(?P<ref>[\w\-_]+))?")?;
@@ -128,7 +129,7 @@ fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
             &github["repo"], &ref_str,
         );
 
-        utils::download_zip(&url, target_dir)?;
+        utils::download_zip(&url, target_dir).await?;
     } else if let Some(codeberg) = codeberg_regex.captures(source) {
         let ref_str = match codeberg.name("ref") {
             Some(ref_match) => ref_match.into(),
@@ -140,7 +141,7 @@ fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
             &codeberg["repo"], &ref_str,
         );
 
-        utils::download_zip(&url, target_dir)?;
+        utils::download_zip(&url, target_dir).await?;
     } else if let Some(gitlab) = gitlab_regex.captures(source) {
         let ref_str = match gitlab.name("ref") {
             Some(ref_match) => ref_match.into(),
@@ -152,15 +153,15 @@ fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
             &gitlab["repo"], &ref_str, &ref_str,
         );
 
-        utils::download_zip(&url, target_dir)?;
+        utils::download_zip(&url, target_dir).await?;
     } else if let Some(url) = source.strip_prefix("url:") {
-        utils::download_zip(url, target_dir)?;
+        utils::download_zip(url, target_dir).await?;
     }
 
     Ok(())
 }
 
-pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
+pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     utils::check_firefox()?;
 
     print_userchrome(userchrome, false);
@@ -173,7 +174,7 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     println!("{} retrieving source", step_counter.to_string().green());
     step_counter += 1;
 
-    handle_source(&userchrome.source, &temp_path)?;
+    handle_source(&userchrome.source, &temp_path).await?;
 
     println!("{} installing userchrome", step_counter.to_string().green());
     step_counter += 1;
@@ -181,7 +182,7 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     let new_chrome_dir = Path::new(&profile).join("chrome");
 
     if new_chrome_dir.exists() {
-        fs::remove_dir_all(&new_chrome_dir)?;
+        fs::remove_dir_all(&new_chrome_dir).await?;
     }
 
     let mut cloned_chrome_dir = temp_path.join("chrome");
@@ -189,12 +190,12 @@ pub fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
         cloned_chrome_dir = temp_path;
     }
 
-    utils::copy_dir_all(&cloned_chrome_dir, &new_chrome_dir)?;
+    utils::copy_dir_all(&cloned_chrome_dir, &new_chrome_dir).await?;
 
     println!("{} applying user.js", "3".green());
     step_counter += 1;
 
-    user(userchrome, profile.as_str(), &mut step_counter)?;
+    user(userchrome, profile.as_str(), &mut step_counter).await?;
 
     println!("{}", "done!".green());
 

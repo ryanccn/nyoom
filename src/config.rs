@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Result};
-use std::{fs, path};
+use std::path;
+use tokio::fs;
 
-use colored::*;
+use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -41,11 +42,11 @@ pub fn get_default_config_path() -> Result<path::PathBuf> {
     }
 }
 
-pub fn get_config(path: &String) -> Result<Config> {
+pub async fn get_config(path: &String) -> Result<Config> {
     let path_t = path::Path::new(path);
 
     let f = match path_t.exists() {
-        true => fs::read_to_string(path)?,
+        true => fs::read_to_string(path).await?,
         false => "".into(),
     };
     let mut config: Config = toml::from_str(&f)?;
@@ -64,15 +65,15 @@ pub fn get_config(path: &String) -> Result<Config> {
     }
 
     if migrated {
-        set_config(path, &config)?;
+        set_config(path, &config).await?;
     }
 
     Ok(config)
 }
 
-pub fn set_config(path: &String, config: &Config) -> Result<()> {
+pub async fn set_config(path: &String, config: &Config) -> Result<()> {
     let serialized = toml::to_string_pretty(&config)?;
-    fs::write(path, serialized)?;
+    fs::write(path, serialized).await?;
 
     Ok(())
 }
@@ -83,8 +84,8 @@ pub fn format_userchrome_config(c: &UserchromeConfig) -> String {
         c.key.magenta(),
         c.value,
         match c.raw {
-            true => " (raw)".dimmed(),
-            false => "".into(),
+            true => " (raw)".dimmed().to_string(),
+            false => "".to_string(),
         }
     )
 }
