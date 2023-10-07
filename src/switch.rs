@@ -156,6 +156,8 @@ async fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
         utils::download_zip(&url, target_dir).await?;
     } else if let Some(url) = source.strip_prefix("url:") {
         utils::download_zip(url, target_dir).await?;
+    } else {
+        return Err(anyhow!("Invalid source specification: {}", source));
     }
 
     Ok(())
