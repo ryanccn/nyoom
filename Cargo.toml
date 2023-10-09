@@ -8,7 +8,7 @@ authors = ["Ryan Cao <hello@ryanccn.dev>"]
 anyhow = "1.0.75"
 async-recursion = "1.0.5"
 clap = { version = "4.4.6", features = ["derive"] }
-clap_complete = "4.4.1"
+clap_complete = "4.4.3"
 dirs = "5.0.1"
 nanoid = "0.4.0"
 owo-colors = "3.5.0"
