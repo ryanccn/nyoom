@@ -6,6 +6,7 @@
   installShellFiles,
   CoreFoundation,
   Security,
+  SystemConfiguration,
   IOKit,
   libiconv,
   version,
@@ -42,6 +43,7 @@ in
     buildInputs = lib.optionals stdenv.isDarwin [
       CoreFoundation
       Security
+      SystemConfiguration
       IOKit
       libiconv
     ];

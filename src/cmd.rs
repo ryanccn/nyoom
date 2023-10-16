@@ -2,7 +2,8 @@ use clap::{CommandFactory, Parser, Subcommand, ValueHint};
 use clap_complete::{generate, Shell};
 
 use anyhow::{anyhow, Result};
-use std::io;
+use std::{io, path::PathBuf};
+use tokio::fs;
 
 use crate::{config, presets, switch};
 
@@ -123,17 +124,23 @@ pub async fn main() -> Result<()> {
 
         Commands::Switch { name } => {
             let config = config::get_config(&cli.config).await?;
-            match config.userchromes.iter().find(|c| c.name.eq(name)) {
-                Some(u) => {
-                    if config.profile.is_empty() {
-                        return Err(anyhow!("no profile configured"));
-                    }
 
-                    switch::switch(u, config.profile).await?;
-                }
-                None => {
-                    return Err(anyhow!("no userchrome with name {} found!", name));
-                }
+            if name == "out" {
+                let profile_path = config.profile.parse::<PathBuf>()?;
+                fs::remove_dir_all(profile_path.join("chrome")).await?;
+            } else {
+                match config.userchromes.iter().find(|c| c.name.eq(name)) {
+                    Some(u) => {
+                        if config.profile.is_empty() {
+                            return Err(anyhow!("no profile configured"));
+                        }
+
+                        switch::switch(u, config.profile).await?;
+                    }
+                    None => {
+                        return Err(anyhow!("no userchrome with name {} found!", name));
+                    }
+                };
             };
 
             Ok(())

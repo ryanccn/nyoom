@@ -71,7 +71,7 @@
     overlays.default = _: prev: {
       nyoom = prev.callPackage ./default.nix {
         inherit self version;
-        inherit (prev.darwin.apple_sdk_11_0.frameworks) CoreFoundation Security;
+        inherit (prev.darwin.apple_sdk_11_0.frameworks) CoreFoundation Security SystemConfiguration;
         inherit (prev.darwin) IOKit;
       };
     };
