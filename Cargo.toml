@@ -18,7 +18,7 @@ reqwest = { version = "0.11.20", features = [
   "brotli",
 ], default-features = false }
 rust-embed = "8.0.0"
-serde = { version = "1.0.179", features = ["derive"] }
+serde = { version = "1.0.189", features = ["derive"] }
 sysinfo = "0.29.10"
 tokio = { version = "1.32.0", features = ["full"] }
 toml = "0.8.1"
