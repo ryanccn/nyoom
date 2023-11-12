@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+
 use std::{
     env,
     path::{Path, PathBuf},
@@ -47,8 +48,11 @@ const START_LINE: &str = "/** nyoom-managed config; do not edit */";
 const END_LINE: &str = "/** end of nyoom-managed config */";
 
 async fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
-    let contents = fs::read_to_string(&f).await.unwrap_or("".to_owned());
-    let lines: Vec<String> = contents.split('\n').map(|a| a.to_owned()).collect();
+    let contents = fs::read_to_string(&f).await.unwrap_or(String::new());
+    let lines: Vec<String> = contents
+        .split('\n')
+        .map(std::borrow::ToOwned::to_owned)
+        .collect();
 
     let mut new_lines = vec![
         "user_pref(\"toolkit.legacyUserProfileCustomizations.stylesheets\", true);".to_owned(),
@@ -74,7 +78,7 @@ async fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
 
     if let Some(start_idx) = start_idx {
         if let Some(end_idx) = end_idx {
-            ret_lines = lines[0..start_idx + 1].to_vec();
+            ret_lines = lines[0..=start_idx].to_vec();
             ret_lines.append(&mut new_lines);
             ret_lines.append(&mut lines[end_idx..].to_vec());
             ret_set = true;
@@ -86,7 +90,7 @@ async fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
         ret_lines.push(START_LINE.to_owned());
         ret_lines.append(&mut new_lines);
         ret_lines.push(END_LINE.to_owned());
-        ret_lines.push("".to_owned());
+        ret_lines.push(String::new());
     }
 
     fs::write(&f, ret_lines.join("\n")).await?;
@@ -164,7 +168,7 @@ async fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
 }
 
 pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
-    utils::check_firefox()?;
+    utils::check_firefox();
 
     print_userchrome(userchrome, false);
     println!();

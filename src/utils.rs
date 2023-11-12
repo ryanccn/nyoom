@@ -69,7 +69,7 @@ pub async fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub fn check_firefox() -> Result<()> {
+pub fn check_firefox() {
     let system =
         System::new_with_specifics(RefreshKind::new().with_processes(ProcessRefreshKind::new()));
     let is_running = system.processes_by_name("firefox").count() != 0;
@@ -78,6 +78,4 @@ pub fn check_firefox() -> Result<()> {
         println!("{}", "Firefox is running, refusing to continue!".yellow());
         exit(1);
     }
-
-    Ok(())
 }

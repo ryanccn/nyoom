@@ -45,9 +45,10 @@ pub fn get_default_config_path() -> Result<path::PathBuf> {
 pub async fn get_config(path: &String) -> Result<Config> {
     let path_t = path::Path::new(path);
 
-    let f = match path_t.exists() {
-        true => fs::read_to_string(path).await?,
-        false => "".into(),
+    let f = if path_t.exists() {
+        fs::read_to_string(path).await?
+    } else {
+        String::new()
     };
     let mut config: Config = toml::from_str(&f)?;
 
@@ -83,9 +84,10 @@ pub fn format_userchrome_config(c: &UserchromeConfig) -> String {
         "{}: {}{}",
         c.key.magenta(),
         c.value,
-        match c.raw {
-            true => " (raw)".dimmed().to_string(),
-            false => "".to_string(),
+        if c.raw {
+            " (raw)".dimmed().to_string()
+        } else {
+            String::new()
         }
     )
 }
@@ -98,9 +100,10 @@ pub fn print_userchrome(userchrome: &Userchrome, short: bool) {
         userchrome.source.dimmed()
     );
 
-    let slice_len = match short {
-        true => userchrome.configs.len().min(3),
-        false => userchrome.configs.len(),
+    let slice_len = if short {
+        userchrome.configs.len().min(3)
+    } else {
+        userchrome.configs.len()
     };
 
     for c in &userchrome.configs[..slice_len] {

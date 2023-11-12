@@ -92,6 +92,7 @@ enum ConfigSubcommands {
     },
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -162,9 +163,9 @@ pub async fn main() -> Result<()> {
 
                 config::set_config(&cli.config, &config).await?;
             } else {
-                presets.into_iter().for_each(|p| {
+                for p in presets {
                     config::print_userchrome(&p, true);
-                })
+                }
             }
 
             Ok(())
@@ -173,15 +174,16 @@ pub async fn main() -> Result<()> {
         Commands::Profile { path } => {
             if let Some(path) = path {
                 let mut config = config::get_config(&cli.config).await?;
-                config.profile = path.to_owned();
+                config.profile = path.clone();
                 config::set_config(&cli.config, &config).await?;
             } else {
                 let config = config::get_config(&cli.config).await?;
                 println!(
                     "{}",
-                    match !config.profile.is_empty() {
-                        true => config.profile,
-                        false => "not set".into(),
+                    if config.profile.is_empty() {
+                        "not set".into()
+                    } else {
+                        config.profile
                     }
                 );
             }
