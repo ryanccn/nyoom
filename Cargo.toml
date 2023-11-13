@@ -7,7 +7,7 @@ authors = ["Ryan Cao <hello@ryanccn.dev>"]
 [dependencies]
 anyhow = "1.0.75"
 async-recursion = "1.0.5"
-clap = { version = "4.4.6", features = ["derive"] }
+clap = { version = "4.4.8", features = ["derive"] }
 clap_complete = "4.4.3"
 dirs = "5.0.1"
 nanoid = "0.4.0"
