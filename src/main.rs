@@ -2,6 +2,10 @@
 #![allow(clippy::module_name_repetitions)]
 #![deny(unsafe_code)]
 
+use anyhow::Result;
+use clap::Parser;
+use cmd::{Cli, Command};
+
 mod cmd;
 mod config;
 mod presets;
@@ -11,10 +15,8 @@ mod utils;
 use owo_colors::OwoColorize;
 
 #[tokio::main]
-async fn main() {
-    if let Err(err) = cmd::main().await {
-        println!("{}", "Encountered error:".red().bold());
-        println!("{err}");
-        std::process::exit(1);
-    }
+async fn main() -> Result<()> {
+    let cli = Cli::parse();
+    cli.command.action(&cli).await?;
+    Ok(())
 }

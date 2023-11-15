@@ -15,9 +15,9 @@ mod switch;
 
 #[derive(Parser)]
 #[command(author, version, about = "\x1B[36;1mnyoom · Firefox userchrome manager\x1B[0m", long_about = None)]
-struct Cli {
+pub struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    pub command: Commands,
 
     /// Config file to use
     #[arg(short, long, default_value_t = get_default_config_path().unwrap().into_os_string().into_string().unwrap(), value_hint = ValueHint::FilePath)]
@@ -26,13 +26,13 @@ struct Cli {
 
 #[async_trait]
 #[enum_dispatch]
-trait Command {
+pub trait Command {
     async fn action(&self, global_options: &Cli) -> Result<()>;
 }
 
 #[derive(Subcommand)]
 #[enum_dispatch(Command)]
-enum Commands {
+pub enum Commands {
     /// List userchromes
     List(list::ListCommand),
     /// Add a new userchrome
@@ -47,10 +47,4 @@ enum Commands {
     Config(config::ConfigCommand),
     /// Generate completions
     Completions(completions::CompletionCommand),
-}
-
-pub async fn main() -> Result<()> {
-    let cli = Cli::parse();
-    cli.command.action(&cli).await?;
-    Ok(())
 }
