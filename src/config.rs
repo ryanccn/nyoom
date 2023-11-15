@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::path;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 
 use owo_colors::OwoColorize;
@@ -15,10 +15,9 @@ pub struct UserchromeConfig {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Userchrome {
     pub name: String,
-    #[serde(default)]
     pub source: String,
 
-    /// deprecated
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub clone_url: Option<String>,
 
     #[serde(default)]
@@ -34,18 +33,36 @@ pub struct Config {
     pub userchromes: Vec<Userchrome>,
 }
 
-pub fn get_default_config_path() -> Result<path::PathBuf> {
-    if let Some(config_dir) = dirs::config_dir() {
-        Ok(config_dir.join("nyoom.toml"))
-    } else {
-        Err(anyhow!("unable to locate config dirs"))
+pub fn get_old_config_path() -> Result<PathBuf> {
+    dirs::config_dir()
+        .ok_or(anyhow!("Unable to locate config dirs"))
+        .map(|dir| dir.join("nyoom.toml"))
+}
+
+pub fn get_default_config_path() -> Result<PathBuf> {
+    dirs::config_dir()
+        .ok_or(anyhow!("Unable to locate config dirs"))
+        .map(|dir| dir.join("nyoom").join("nyoom.toml"))
+}
+
+pub async fn migrate_config() -> Result<()> {
+    let old = get_old_config_path()?;
+    let new = get_default_config_path()?;
+
+    if old.exists() && !new.exists() {
+        fs::create_dir_all(
+            new.parent()
+                .ok_or(anyhow!("Could not obtain parent directory of config"))?,
+        )
+        .await?;
+        fs::copy(old, new).await?;
     }
+
+    Ok(())
 }
 
 pub async fn get_config(path: &String) -> Result<Config> {
-    let path_t = path::Path::new(path);
-
-    let f = if path_t.exists() {
+    let f = if Path::new(path).exists() {
         fs::read_to_string(path).await?
     } else {
         String::new()
