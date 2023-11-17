@@ -1,17 +1,8 @@
 {
   description = "A small CLI Firefox userchrome manager";
 
-  nixConfig = {
-    extra-substituters = [
-      "https://nix.ryanccn.dev/nyoom"
-    ];
-    extra-trusted-public-keys = [
-      "nyoom:I3711Q+jJWqxuAiJljlmwi/89eFY5+AdrJgoIAEyS9o="
-    ];
-  };
-
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
   outputs = {
