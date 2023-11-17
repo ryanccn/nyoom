@@ -12,6 +12,11 @@ value = 'true'
 raw = true
 
 [[configs]]
+key = 'layout.css.light-dark.enabled'
+value = 'true'
+raw = true
+
+[[configs]]
 key = 'widget.macos.native-context-menus'
 value = 'false'
 raw = true
