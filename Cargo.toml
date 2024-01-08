@@ -9,7 +9,7 @@ publish = false
 anyhow = "1.0.75"
 async-recursion = "1.0.5"
 async-trait = "0.1.74"
-clap = { version = "4.4.6", features = ["derive"] }
+clap = { version = "4.4.13", features = ["derive"] }
 clap_complete = "4.4.3"
 dirs = "5.0.1"
 enum_dispatch = "0.3.12"
