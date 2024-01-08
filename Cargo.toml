@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.75"
 async-recursion = "1.0.5"
-async-trait = "0.1.74"
+async-trait = "0.1.77"
 clap = { version = "4.4.6", features = ["derive"] }
 clap_complete = "4.4.3"
 dirs = "5.0.1"
