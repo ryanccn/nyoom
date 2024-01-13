@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use clap::Parser;
 
-use crate::{config, switch};
+use crate::{config, switch, utils};
 
 #[derive(Parser)]
 pub struct SwitchCommand {
@@ -17,6 +17,8 @@ pub struct SwitchCommand {
 impl super::Command for SwitchCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         let config = config::get_config(&global_options.config).await?;
+
+        utils::check_firefox();
 
         if self.name == "out" {
             let profile_path = config.profile.parse::<PathBuf>()?;

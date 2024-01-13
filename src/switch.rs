@@ -168,8 +168,6 @@ async fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
 }
 
 pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
-    utils::check_firefox();
-
     print_userchrome(userchrome, false);
     println!();
 
