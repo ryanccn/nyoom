@@ -10,7 +10,7 @@ anyhow = "1.0.75"
 async-recursion = "1.0.5"
 async-trait = "0.1.74"
 clap = { version = "4.4.6", features = ["derive"] }
-clap_complete = "4.4.3"
+clap_complete = "4.5.0"
 dirs = "5.0.1"
 enum_dispatch = "0.3.12"
 nanoid = "0.4.0"
