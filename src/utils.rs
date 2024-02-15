@@ -7,7 +7,7 @@ use std::{
 };
 use tokio::fs;
 
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use nanoid::nanoid;
 use owo_colors::OwoColorize;
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
@@ -56,7 +56,7 @@ pub async fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
     if extracted_contents_size == 1 {
         copy_dir_all(
             &extracted_contents_last_path
-                .ok_or(anyhow!("could not find path in unpacked directory"))?,
+                .ok_or(eyre!("could not find path in unpacked directory"))?,
             target_dir,
         )
         .await?;

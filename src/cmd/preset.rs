@@ -1,6 +1,6 @@
-use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use clap::Parser;
+use color_eyre::eyre::{eyre, Result};
 
 use crate::{config, presets};
 
@@ -19,7 +19,7 @@ impl super::Command for PresetCommand {
             let preset = presets
                 .into_iter()
                 .find(|p| p.name == *name)
-                .ok_or(anyhow!("no preset named {} exists!", name))?;
+                .ok_or(eyre!("no preset named {} exists!", name))?;
 
             let mut config = config::get_config(&global_options.config).await?;
 

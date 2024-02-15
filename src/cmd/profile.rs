@@ -1,6 +1,6 @@
-use anyhow::Result;
 use async_trait::async_trait;
 use clap::{Parser, ValueHint};
+use color_eyre::eyre::Result;
 
 use crate::config;
 

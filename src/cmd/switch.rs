@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use tokio::fs;
 
-use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use clap::Parser;
+use color_eyre::eyre::{eyre, Result};
 
 use crate::{config, switch, utils};
 
@@ -27,13 +27,13 @@ impl super::Command for SwitchCommand {
             match config.userchromes.iter().find(|c| c.name.eq(&self.name)) {
                 Some(u) => {
                     if config.profile.is_empty() {
-                        return Err(anyhow!("no profile configured"));
+                        return Err(eyre!("no profile configured"));
                     }
 
                     switch::switch(u, config.profile).await?;
                 }
                 None => {
-                    return Err(anyhow!("no userchrome with name {} found!", self.name));
+                    return Err(eyre!("no userchrome with name {} found!", self.name));
                 }
             };
         };

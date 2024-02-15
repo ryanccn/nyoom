@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 
 use std::{
     env,
@@ -24,7 +24,7 @@ async fn run_arkenfox_script(profile: &str, name: &str, args: Vec<&str>) -> Resu
 
     let script = Path::new(&profile).join(name.to_owned() + suffix);
     if !script.exists() {
-        return Err(anyhow!(
+        return Err(eyre!(
             "script {} doesn't exist in profile {}",
             name,
             profile
@@ -161,7 +161,7 @@ async fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
     } else if let Some(url) = source.strip_prefix("url:") {
         utils::download_zip(url, target_dir).await?;
     } else {
-        return Err(anyhow!("Invalid source specification: {}", source));
+        return Err(eyre!("Invalid source specification: {}", source));
     }
 
     Ok(())

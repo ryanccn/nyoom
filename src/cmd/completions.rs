@@ -1,9 +1,9 @@
 use clap_complete::{generate, Shell};
 use std::io::stdout;
 
-use anyhow::Result;
 use async_trait::async_trait;
 use clap::{CommandFactory, Parser};
+use color_eyre::eyre::Result;
 
 #[derive(Parser)]
 pub struct CompletionCommand {

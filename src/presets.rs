@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use rust_embed::RustEmbed;
 
 use crate::config::Userchrome;
@@ -13,7 +13,7 @@ pub fn get_presets() -> Result<Vec<Userchrome>> {
         .map(|f| -> Result<Userchrome> {
             Ok(toml::from_str(&String::from_utf8(
                 Presets::get(&f)
-                    .ok_or(anyhow!(
+                    .ok_or(eyre!(
                         "preset {} not found despite it being returned from iterator",
                         f
                     ))?

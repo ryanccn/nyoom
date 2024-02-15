@@ -1,8 +1,8 @@
 use crate::config::get_default_config_path;
 use clap::{Parser, Subcommand, ValueHint};
 
-use anyhow::Result;
 use async_trait::async_trait;
+use color_eyre::eyre::Result;
 use enum_dispatch::enum_dispatch;
 
 mod add;
