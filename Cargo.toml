@@ -18,7 +18,7 @@ owo-colors = "3.5.0"
 regex = "1.10.1"
 reqwest = { version = "0.11.22", features = ["rustls-tls", "brotli"], default-features = false }
 rust-embed = "8.0.0"
-serde = { version = "1.0.189", features = ["derive"] }
+serde = { version = "1.0.197", features = ["derive"] }
 sysinfo = "0.29.11"
 tokio = { version = "1.33.0", features = ["full"] }
 toml = "0.8.2"
