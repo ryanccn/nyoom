@@ -11,6 +11,7 @@ mod config;
 mod list;
 mod preset;
 mod profile;
+mod remove;
 mod switch;
 
 #[derive(Parser)]
@@ -37,6 +38,8 @@ pub enum Commands {
     List(list::ListCommand),
     /// Add a new userchrome
     Add(add::AddCommand),
+    /// Remove a userchrome
+    Remove(remove::RemoveCommand),
     /// Switch to a userchrome
     Switch(switch::SwitchCommand),
     /// Import a preset as a userchrome or list presets
