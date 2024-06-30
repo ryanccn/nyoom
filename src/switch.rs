@@ -8,7 +8,7 @@ use std::{
 use tokio::{fs, process::Command};
 
 use nanoid::nanoid;
-use owo_colors::OwoColorize;
+use owo_colors::OwoColorize as _;
 use regex::Regex;
 
 use crate::{
