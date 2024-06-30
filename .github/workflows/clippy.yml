@@ -33,7 +33,7 @@ jobs:
         run: cargo clippy --all --all-targets --message-format=json | clippy-sarif > /tmp/clippy.sarif
 
       - name: Upload clippy results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: /tmp/clippy.sarif
 

@@ -1,6 +1,5 @@
-use async_trait::async_trait;
 use clap::Parser;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{bail, Result};
 
 use crate::config;
 
@@ -12,10 +11,13 @@ pub struct AddCommand {
     source: String,
 }
 
-#[async_trait]
 impl super::Command for AddCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         let mut config = config::get_config(&global_options.config).await?;
+
+        if config.userchromes.iter().any(|uc| uc.name == self.name) {
+            bail!("the userchrome {} already exists!", self.name);
+        }
 
         let new_userchrome = config::Userchrome {
             name: self.name.clone(),

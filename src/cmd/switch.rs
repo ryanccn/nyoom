@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use tokio::fs;
 
-use async_trait::async_trait;
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
 
@@ -13,7 +12,6 @@ pub struct SwitchCommand {
     name: String,
 }
 
-#[async_trait]
 impl super::Command for SwitchCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         let config = config::get_config(&global_options.config).await?;

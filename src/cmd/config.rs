@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{eyre, Result};
 
@@ -38,7 +37,6 @@ enum ConfigSubcommands {
     },
 }
 
-#[async_trait]
 impl super::Command for ConfigCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         match &self.command {
@@ -48,7 +46,7 @@ impl super::Command for ConfigCommand {
                     .userchromes
                     .iter()
                     .find(|d| d.name.eq(name))
-                    .ok_or(eyre!("no userchrome with name {} exists", name))?;
+                    .ok_or_else(|| eyre!("no userchrome with name {} exists", name))?;
 
                 for c in &uc.configs {
                     println!("{}", config::format_userchrome_config(c));
@@ -68,7 +66,7 @@ impl super::Command for ConfigCommand {
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .ok_or(eyre!("no userchrome with name {} exists", name))?;
+                    .ok_or_else(|| eyre!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().find(|c| c.key == *key);
 
@@ -94,7 +92,7 @@ impl super::Command for ConfigCommand {
                     .userchromes
                     .iter_mut()
                     .find(|d| d.name.eq(name))
-                    .ok_or(eyre!("no userchrome with name {} exists", name))?;
+                    .ok_or_else(|| eyre!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().position(|c| c.key == *key);
 
