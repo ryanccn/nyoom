@@ -1,7 +1,6 @@
 use crate::config::get_default_config_path;
 use clap::{Parser, Subcommand, ValueHint};
 
-use async_trait::async_trait;
 use color_eyre::eyre::Result;
 use enum_dispatch::enum_dispatch;
 
@@ -24,7 +23,6 @@ pub struct Cli {
     config: String,
 }
 
-#[async_trait]
 #[enum_dispatch]
 pub trait Command {
     async fn action(&self, global_options: &Cli) -> Result<()>;

@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
 
@@ -10,7 +9,6 @@ pub struct PresetCommand {
     name: Option<String>,
 }
 
-#[async_trait]
 impl super::Command for PresetCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         let presets = presets::get_presets()?;
@@ -19,7 +17,7 @@ impl super::Command for PresetCommand {
             let preset = presets
                 .into_iter()
                 .find(|p| p.name == *name)
-                .ok_or(eyre!("no preset named {} exists!", name))?;
+                .ok_or_else(|| eyre!("no preset named {} exists!", name))?;
 
             let mut config = config::get_config(&global_options.config).await?;
 

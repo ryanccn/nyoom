@@ -86,7 +86,7 @@ async fn patch_user_file(userchrome: &Userchrome, f: PathBuf) -> Result<()> {
     }
 
     if !ret_set {
-        ret_lines = lines.clone();
+        ret_lines.clone_from(&lines);
         ret_lines.push(START_LINE.to_owned());
         ret_lines.append(&mut new_lines);
         ret_lines.push(END_LINE.to_owned());

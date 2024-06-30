@@ -35,13 +35,13 @@ pub struct Config {
 
 pub fn get_old_config_path() -> Result<PathBuf> {
     dirs::config_dir()
-        .ok_or(eyre!("Unable to locate config dirs"))
+        .ok_or_else(|| eyre!("Unable to locate config dirs"))
         .map(|dir| dir.join("nyoom.toml"))
 }
 
 pub fn get_default_config_path() -> Result<PathBuf> {
     dirs::config_dir()
-        .ok_or(eyre!("Unable to locate config dirs"))
+        .ok_or_else(|| eyre!("Unable to locate config dirs"))
         .map(|dir| dir.join("nyoom").join("nyoom.toml"))
 }
 
@@ -52,7 +52,7 @@ pub async fn migrate_config() -> Result<()> {
     if old.exists() && !new.exists() {
         fs::create_dir_all(
             new.parent()
-                .ok_or(eyre!("Could not obtain parent directory of config"))?,
+                .ok_or_else(|| eyre!("Could not obtain parent directory of config"))?,
         )
         .await?;
         fs::copy(old, new).await?;
