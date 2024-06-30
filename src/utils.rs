@@ -9,7 +9,7 @@ use tokio::fs;
 
 use color_eyre::eyre::{eyre, Result};
 use nanoid::nanoid;
-use owo_colors::OwoColorize;
+use owo_colors::OwoColorize as _;
 use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 use zip::ZipArchive;
 

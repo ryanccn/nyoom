@@ -2,7 +2,7 @@ use color_eyre::eyre::{eyre, Result};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
-use owo_colors::OwoColorize;
+use owo_colors::OwoColorize as _;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
