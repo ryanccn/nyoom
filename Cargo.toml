@@ -21,4 +21,4 @@ serde = { version = "1.0.203", features = ["derive"] }
 sysinfo = "0.30.12"
 tokio = { version = "1.38.0", features = ["full"] }
 toml = "0.8.14"
-zip = "2.1.1"
+zip = "2.1.3"
