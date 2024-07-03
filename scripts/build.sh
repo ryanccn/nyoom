@@ -21,7 +21,9 @@ if [[ -z "$TARGET" ]]; then
     exit 1
 fi
 
-export RUSTFLAGS="-C lto=fat -C embed-bitcode=yes -C strip=symbols -C codegen-units=1 -C opt-level=z"
+export RUSTFLAGS=""
+export CARGO_PROFILE_RELEASE_LTO="fat"
+export CARGO_PROFILE_RELEASE_CODEGEN_UNITS="1"
 
 if [[ "$TARGET" = "aarch64-unknown-linux-"* ]]; then
     apt_install gcc-aarch64-linux-gnu
@@ -39,8 +41,10 @@ if [[ "$TARGET" = "aarch64-unknown-linux-musl" ]]; then
 fi
 
 echo -e "\033[2m>\033[0m RUSTFLAGS=\033[36m\"$RUSTFLAGS\"\033[0m"
+echo -e "\033[2m>\033[0m CARGO_PROFILE_RELEASE_LTO=\033[36m\"$CARGO_PROFILE_RELEASE_LTO\"\033[0m"
+echo -e "\033[2m>\033[0m CARGO_PROFILE_RELEASE_CODEGEN_UNITS=\033[36m\"$CARGO_PROFILE_RELEASE_CODEGEN_UNITS\"\033[0m"
 
-exec_print cargo build -r --target "$TARGET" --locked
+exec_print cargo build --release --locked --target "$TARGET"
 
 result_suffix=""
 artifact_basename_suffix=""
