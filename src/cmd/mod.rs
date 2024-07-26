@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand, ValueHint};
 
 use color_eyre::eyre::Result;
 use enum_dispatch::enum_dispatch;
+use std::path::PathBuf;
 
 mod add;
 mod completions;
@@ -20,8 +21,8 @@ pub struct Cli {
     pub command: Commands,
 
     /// Config file to use
-    #[arg(short, long, default_value_t = get_default_config_path().unwrap().into_os_string().into_string().unwrap(), value_hint = ValueHint::FilePath)]
-    config: String,
+    #[arg(short, long, default_value_os_t = get_default_config_path().unwrap(), value_hint = ValueHint::FilePath)]
+    config: PathBuf,
 }
 
 #[enum_dispatch]

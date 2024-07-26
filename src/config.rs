@@ -61,7 +61,7 @@ pub async fn migrate_config() -> Result<()> {
     Ok(())
 }
 
-pub async fn get_config(path: &String) -> Result<Config> {
+pub async fn get_config(path: &Path) -> Result<Config> {
     let f = if Path::new(path).exists() {
         fs::read_to_string(path).await?
     } else {
@@ -89,7 +89,13 @@ pub async fn get_config(path: &String) -> Result<Config> {
     Ok(config)
 }
 
-pub async fn set_config(path: &String, config: &Config) -> Result<()> {
+pub async fn set_config(path: &Path, config: &Config) -> Result<()> {
+    fs::create_dir_all(
+        path.parent()
+            .ok_or_else(|| eyre!("Could not obtain parent directory of config"))?,
+    )
+    .await?;
+
     let serialized = toml::to_string_pretty(&config)?;
     fs::write(path, serialized).await?;
 
