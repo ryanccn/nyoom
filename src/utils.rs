@@ -1,4 +1,5 @@
 use async_recursion::async_recursion;
+use regex::Regex;
 use std::{
     env,
     io::{BufReader, Cursor},
@@ -6,6 +7,7 @@ use std::{
     process::exit,
 };
 use tokio::fs;
+use tokio::process::Command;
 
 use color_eyre::eyre::{eyre, Result};
 use nanoid::nanoid;
@@ -78,4 +80,52 @@ pub fn check_firefox() {
         println!("{}", "Firefox is running, refusing to continue!".yellow());
         exit(1);
     }
+}
+
+pub fn is_remote_source(source: &str) -> bool {
+    let remote_regex = Regex::new(r"^(https?://|github:|codeberg:|gitlab:)").unwrap();
+    remote_regex.is_match(source)
+}
+
+pub async fn is_git_repo_updated(source: &str, cache_path: &PathBuf) -> Result<bool> {
+    let output = Command::new("git")
+        .args(&[
+            "-C",
+            cache_path.to_str().unwrap(),
+            "ls-remote",
+            source,
+            "HEAD",
+        ])
+        .output()
+        .await?;
+
+    let remote_hash = String::from_utf8_lossy(&output.stdout);
+    let remote_hash = remote_hash.split_whitespace().next().unwrap_or("");
+
+    let local_output = Command::new("git")
+        .args(&["-C", cache_path.to_str().unwrap(), "rev-parse", "HEAD"])
+        .output()
+        .await?;
+
+    let local_hash = String::from_utf8_lossy(&local_output.stdout)
+        .trim()
+        .to_string();
+
+    Ok(remote_hash != local_hash)
+}
+
+pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<()> {
+    if !cache_path.exists() {
+        Command::new("git")
+            .args(&["clone", source, cache_path.to_str().unwrap()])
+            .output()
+            .await?;
+    } else {
+        Command::new("git")
+            .args(&["-C", cache_path.to_str().unwrap(), "pull"])
+            .output()
+            .await?;
+    }
+
+    Ok(())
 }

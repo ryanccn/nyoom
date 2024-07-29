@@ -1,7 +1,6 @@
-use crate::{config, switch};
+use crate::{config, switch, utils};
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
-use url::Url;
 
 #[derive(Parser)]
 pub struct RefreshCommand {
@@ -18,15 +17,21 @@ impl super::Command for RefreshCommand {
             .find(|uc| uc.name == self.name)
             .ok_or_else(|| eyre!("Userchrome {} not found", self.name))?;
 
-        if let Ok(url) = Url::parse(&userchrome.source) {
-            if url.scheme() == "http" || url.scheme() == "https" {
-                switch::switch(userchrome, &config.profile).await?;
+        let cache_path = userchrome
+            .cache_path
+            .as_ref()
+            .ok_or_else(|| eyre!("Cache path not found for userchrome {}", self.name))?;
+
+        if utils::is_remote_source(&userchrome.source) {
+            if utils::is_git_repo_updated(&userchrome.source, cache_path).await? {
+                utils::download_and_cache(&userchrome.source, cache_path).await?;
+                switch::switch(userchrome, config.profile.clone()).await?;
                 println!("Refreshed userchrome: {}", self.name);
             } else {
-                println!("Skipping refresh: {} is not a remote source", self.name);
+                println!("Userchrome {} is already up to date", self.name);
             }
         } else {
-            println!("Skipping refresh: {} is not a valid URL", self.name);
+            println!("Skipping refresh: {} is not a remote source", self.name);
         }
 
         Ok(())

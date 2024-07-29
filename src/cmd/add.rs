@@ -1,7 +1,7 @@
 use clap::Parser;
 use color_eyre::eyre::{bail, Result};
 
-use crate::config;
+use crate::{config, utils};
 
 #[derive(Parser)]
 pub struct AddCommand {
@@ -16,15 +16,20 @@ impl super::Command for AddCommand {
         let mut config = config::get_config(&global_options.config).await?;
 
         if config.userchromes.iter().any(|uc| uc.name == self.name) {
-            bail!("the userchrome {} already exists!", self.name);
+            bail!("The userchrome {} already exists!", self.name);
         }
+
+        let cache_path = config.cache_dir.join(&self.name);
+        utils::download_and_cache(&self.source, &cache_path).await?;
 
         let new_userchrome = config::Userchrome {
             name: self.name.clone(),
             source: self.source.clone(),
-            clone_url: None,
+            cache_path: Some(cache_path),
             configs: vec![],
+            clone_url: None,
         };
+
         config::print_userchrome(&new_userchrome, false);
         config.userchromes.push(new_userchrome);
 
