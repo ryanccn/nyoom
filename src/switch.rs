@@ -1,5 +1,6 @@
 use color_eyre::eyre::{eyre, Result};
 
+use nanoid::nanoid;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -170,33 +171,31 @@ pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     print_userchrome(userchrome, false);
     println!();
 
-    let mut step_counter = 1;
     let new_chrome_dir = Path::new(&profile).join("chrome");
+    let source_dir = userchrome.cache_path.clone().unwrap_or_else(|| {
+        let temp_path = env::temp_dir().join(nanoid!());
+        handle_source(&userchrome.source, &temp_path).await.unwrap();
+        temp_path
+    });
 
-    println!("{} retrieving source", step_counter.to_string().green());
-    step_counter += 1;
-
-    if let Some(cache_path) = &userchrome.cache_path {
-        utils::copy_dir_all(cache_path, &new_chrome_dir).await?;
-    } else {
-        handle_source(&userchrome.source, &new_chrome_dir).await?;
-    }
-
-    println!("{} installing userchrome", step_counter.to_string().green());
-    step_counter += 1;
+    println!("{} retrieving source", "1".green());
+    println!("{} installing userchrome", "2".green());
 
     if new_chrome_dir.exists() {
         fs::remove_dir_all(&new_chrome_dir).await?;
     }
 
-    utils::copy_dir_all(&new_chrome_dir, &new_chrome_dir).await?;
+    let copy_from = source_dir
+        .join("chrome")
+        .exists()
+        .then(|| source_dir.join("chrome"))
+        .unwrap_or(source_dir);
 
-    println!("{} applying user.js", step_counter.to_string().green());
-    step_counter += 1;
+    utils::copy_dir_all(&copy_from, &new_chrome_dir).await?;
 
-    user(userchrome, profile.as_str(), &mut step_counter).await?;
+    println!("{} applying user.js", "3".green());
+    user(userchrome, &profile, &mut 4).await?;
 
     println!("{}", "done!".green());
-
     Ok(())
 }

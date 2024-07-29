@@ -115,17 +115,44 @@ pub async fn is_git_repo_updated(source: &str, cache_path: &PathBuf) -> Result<b
 }
 
 pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<()> {
+    let git_url = construct_git_url(source)?;
+
     if !cache_path.exists() {
-        Command::new("git")
-            .args(&["clone", source, cache_path.to_str().unwrap()])
+        let output = Command::new("git")
+            .args(&["clone", &git_url, cache_path.to_str().unwrap()])
             .output()
             .await?;
+
+        if !output.status.success() {
+            return Err(eyre!(
+                "Failed to clone repository: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
     } else {
-        Command::new("git")
+        let output = Command::new("git")
             .args(&["-C", cache_path.to_str().unwrap(), "pull"])
             .output()
             .await?;
+
+        if !output.status.success() {
+            return Err(eyre!(
+                "Failed to update repository: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
     }
 
     Ok(())
+}
+
+fn construct_git_url(source: &str) -> Result<String> {
+    match source.split_once(':') {
+        Some(("github", repo)) => Ok(format!("https://github.com/{}.git", repo)),
+        Some(("codeberg", repo)) => Ok(format!("https://codeberg.org/{}.git", repo)),
+        Some(("gitlab", repo)) => Ok(format!("https://gitlab.com/{}.git", repo)),
+        Some(("http", _)) | Some(("https", _)) => Ok(source.to_string()),
+        _ if source.contains("://") => Ok(source.to_string()),
+        _ => Ok(format!("https://{}", source)),
+    }
 }
