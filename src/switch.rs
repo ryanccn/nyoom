@@ -1,6 +1,5 @@
 use color_eyre::eyre::{eyre, Result};
 
-use nanoid::nanoid;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -8,6 +7,7 @@ use std::{
 };
 use tokio::{fs, process::Command};
 
+use nanoid::nanoid;
 use owo_colors::OwoColorize as _;
 use regex::Regex;
 
@@ -171,6 +171,8 @@ pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     print_userchrome(userchrome, false);
     println!();
 
+    let mut step_counter = 1;
+
     let new_chrome_dir = Path::new(&profile).join("chrome");
     let source_dir = userchrome.cache_path.clone().unwrap_or_else(|| {
         let temp_path = env::temp_dir().join(nanoid!());
@@ -178,8 +180,8 @@ pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
         temp_path
     });
 
-    println!("{} retrieving source", "1".green());
-    println!("{} installing userchrome", "2".green());
+    println!("{} installing userchrome", step_counter.to_string().green());
+    step_counter += 1;
 
     if new_chrome_dir.exists() {
         fs::remove_dir_all(&new_chrome_dir).await?;
@@ -193,8 +195,10 @@ pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
 
     utils::copy_dir_all(&copy_from, &new_chrome_dir).await?;
 
-    println!("{} applying user.js", "3".green());
-    user(userchrome, &profile, &mut 4).await?;
+    println!("{} applying user.js", step_counter.to_string().green());
+    step_counter += 1;
+
+    user(userchrome, &profile, &mut step_counter).await?;
 
     println!("{}", "done!".green());
     Ok(())
