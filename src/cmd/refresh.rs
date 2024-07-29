@@ -23,8 +23,8 @@ impl super::Command for RefreshCommand {
             .ok_or_else(|| eyre!("Cache path not found for userchrome {}", self.name))?;
 
         if utils::is_remote_source(&userchrome.source) {
-            if utils::is_git_repo_updated(&userchrome.source, cache_path).await? {
-                utils::download_and_cache(&userchrome.source, cache_path).await?;
+            let updated = utils::download_and_cache(&userchrome.source, cache_path).await?;
+            if updated {
                 switch::switch(userchrome, config.profile.clone()).await?;
                 println!("Refreshed userchrome: {}", self.name);
             } else {

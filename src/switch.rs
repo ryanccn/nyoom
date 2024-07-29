@@ -175,9 +175,11 @@ pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
 
     let new_chrome_dir = Path::new(&profile).join("chrome");
     let source_dir = userchrome.cache_path.clone().unwrap_or_else(|| {
-        let temp_path = env::temp_dir().join(nanoid!());
-        handle_source(&userchrome.source, &temp_path).await.unwrap();
-        temp_path
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let temp_path = env::temp_dir().join(nanoid!());
+            handle_source(&userchrome.source, &temp_path).await.unwrap();
+            temp_path
+        })
     });
 
     println!("{} installing userchrome", step_counter.to_string().green());

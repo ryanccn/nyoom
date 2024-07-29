@@ -1,8 +1,6 @@
 use clap::Parser;
-use color_eyre::{
-    eyre::{eyre, Result},
-    owo_colors::OwoColorize as _,
-};
+use color_eyre::eyre::{eyre, Result};
+use tokio::fs;
 
 use crate::config;
 
@@ -24,15 +22,22 @@ impl super::Command for RemoveCommand {
 
         match res {
             Some((i, uchrome)) => {
-                println!("Removing {}!", uchrome.name.cyan());
                 config::print_userchrome(uchrome, true);
+
+                // Remove cache if it exists
+                if let Some(cache_path) = &uchrome.cache_path {
+                    if cache_path.exists() {
+                        fs::remove_dir_all(cache_path).await?;
+                        println!("Removed cache at {:?}", cache_path);
+                    }
+                }
 
                 config.userchromes.remove(i);
                 config::set_config(&global_options.config, &config).await?;
                 Ok(())
             }
             None => Err(eyre!(
-                "no userchrome with name {} found to remove!",
+                "No userchrome with name {} found to remove!",
                 self.name
             )),
         }

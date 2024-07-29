@@ -86,7 +86,8 @@ pub fn is_remote_source(source: &str) -> bool {
     let remote_regex = Regex::new(r"^(https?://|github:|codeberg:|gitlab:)").unwrap();
     remote_regex.is_match(source)
 }
-pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<()> {
+
+pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<bool> {
     let git_url = construct_git_url(source)?;
 
     if !cache_path.exists() {
@@ -108,41 +109,54 @@ pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<()
                 String::from_utf8_lossy(&output.stderr)
             ));
         }
+        Ok(true)
     } else {
-        println!("Updating cached repository...");
+        // Fetch logic here
         let output = Command::new("git")
             .args(&["-C", cache_path.to_str().unwrap(), "fetch", "--depth", "1"])
             .output()
             .await?;
 
         if !output.status.success() {
-            return Err(eyre!(
-                "Failed to fetch updates: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ));
+            return Err(eyre!("Failed to fetch updates"));
         }
 
         let output = Command::new("git")
             .args(&[
                 "-C",
                 cache_path.to_str().unwrap(),
-                "reset",
-                "--hard",
-                "origin/HEAD",
+                "rev-list",
+                "HEAD...origin/HEAD",
+                "--count",
             ])
             .output()
             .await?;
 
-        if !output.status.success() {
-            return Err(eyre!(
-                "Failed to update to latest commit: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ));
+        let behind_count = String::from_utf8_lossy(&output.stdout)
+            .trim()
+            .parse::<u32>()?;
+
+        if behind_count > 0 {
+            // Reset logic here
+            let output = Command::new("git")
+                .args(&[
+                    "-C",
+                    cache_path.to_str().unwrap(),
+                    "reset",
+                    "--hard",
+                    "origin/HEAD",
+                ])
+                .output()
+                .await?;
+
+            if !output.status.success() {
+                return Err(eyre!("Failed to reset to latest commit"));
+            }
+            Ok(true)
+        } else {
+            Ok(false)
         }
     }
-
-    println!("Repository cached successfully at {:?}", cache_path);
-    Ok(())
 }
 
 fn construct_git_url(source: &str) -> Result<String> {
