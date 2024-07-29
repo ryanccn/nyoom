@@ -1,6 +1,7 @@
 use crate::{config, switch};
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
+use url::Url;
 
 #[derive(Parser)]
 pub struct RefreshCommand {
@@ -17,12 +18,17 @@ impl super::Command for RefreshCommand {
             .find(|uc| uc.name == self.name)
             .ok_or_else(|| eyre!("Userchrome {} not found", self.name))?;
 
-        let profile = &config.profile;
+        if let Ok(url) = Url::parse(&userchrome.source) {
+            if url.scheme() == "http" || url.scheme() == "https" {
+                switch::switch(userchrome, &config.profile).await?;
+                println!("Refreshed userchrome: {}", self.name);
+            } else {
+                println!("Skipping refresh: {} is not a remote source", self.name);
+            }
+        } else {
+            println!("Skipping refresh: {} is not a valid URL", self.name);
+        }
 
-        // Use the existing switch function to refresh the userchrome
-        switch::switch(userchrome, profile.to_string()).await?;
-
-        println!("Refreshed userchrome: {}", self.name);
         Ok(())
     }
 }
