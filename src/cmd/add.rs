@@ -22,11 +22,7 @@ impl super::Command for AddCommand {
         let cache_path = config.cache_dir.join(&self.name);
 
         if utils::is_remote_source(&self.source) {
-            println!("Caching remote source...");
             utils::download_and_cache(&self.source, &cache_path).await?;
-            println!("Source cached successfully at {:?}", cache_path);
-        } else {
-            println!("Source is not a recognized remote type, skipping cache");
         }
 
         let new_userchrome = config::Userchrome {
