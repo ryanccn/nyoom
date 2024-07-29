@@ -86,40 +86,19 @@ pub fn is_remote_source(source: &str) -> bool {
     let remote_regex = Regex::new(r"^(https?://|github:|codeberg:|gitlab:)").unwrap();
     remote_regex.is_match(source)
 }
-
-pub async fn is_git_repo_updated(source: &str, cache_path: &PathBuf) -> Result<bool> {
-    let output = Command::new("git")
-        .args(&[
-            "-C",
-            cache_path.to_str().unwrap(),
-            "ls-remote",
-            source,
-            "HEAD",
-        ])
-        .output()
-        .await?;
-
-    let remote_hash = String::from_utf8_lossy(&output.stdout);
-    let remote_hash = remote_hash.split_whitespace().next().unwrap_or("");
-
-    let local_output = Command::new("git")
-        .args(&["-C", cache_path.to_str().unwrap(), "rev-parse", "HEAD"])
-        .output()
-        .await?;
-
-    let local_hash = String::from_utf8_lossy(&local_output.stdout)
-        .trim()
-        .to_string();
-
-    Ok(remote_hash != local_hash)
-}
-
 pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<()> {
     let git_url = construct_git_url(source)?;
 
     if !cache_path.exists() {
+        println!("Cloning repository to cache...");
         let output = Command::new("git")
-            .args(&["clone", &git_url, cache_path.to_str().unwrap()])
+            .args(&[
+                "clone",
+                "--depth",
+                "1",
+                &git_url,
+                cache_path.to_str().unwrap(),
+            ])
             .output()
             .await?;
 
@@ -130,19 +109,39 @@ pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<()
             ));
         }
     } else {
+        println!("Updating cached repository...");
         let output = Command::new("git")
-            .args(&["-C", cache_path.to_str().unwrap(), "pull"])
+            .args(&["-C", cache_path.to_str().unwrap(), "fetch", "--depth", "1"])
             .output()
             .await?;
 
         if !output.status.success() {
             return Err(eyre!(
-                "Failed to update repository: {}",
+                "Failed to fetch updates: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+
+        let output = Command::new("git")
+            .args(&[
+                "-C",
+                cache_path.to_str().unwrap(),
+                "reset",
+                "--hard",
+                "origin/HEAD",
+            ])
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            return Err(eyre!(
+                "Failed to update to latest commit: {}",
                 String::from_utf8_lossy(&output.stderr)
             ));
         }
     }
 
+    println!("Repository cached successfully at {:?}", cache_path);
     Ok(())
 }
 
