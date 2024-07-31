@@ -3,7 +3,7 @@ use regex::Regex;
 use std::{
     env,
     io::{BufReader, Cursor},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::exit,
 };
 use tokio::fs;
@@ -86,34 +86,13 @@ pub fn is_remote_source(source: &str) -> bool {
     let remote_regex = Regex::new(r"^(https?://|github:|codeberg:|gitlab:)").unwrap();
     remote_regex.is_match(source)
 }
+pub async fn download_and_cache(source: &str, cache_path: &Path) -> Result<bool> {
+    let git_url = construct_git_url(source);
 
-pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<bool> {
-    let git_url = construct_git_url(source)?;
-
-    if !cache_path.exists() {
-        println!("Cloning repository to cache...");
-        let output = Command::new("git")
-            .args(&[
-                "clone",
-                "--depth",
-                "1",
-                &git_url,
-                cache_path.to_str().unwrap(),
-            ])
-            .output()
-            .await?;
-
-        if !output.status.success() {
-            return Err(eyre!(
-                "Failed to clone repository: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ));
-        }
-        Ok(true)
-    } else {
+    if cache_path.exists() {
         // Fetch logic here
         let output = Command::new("git")
-            .args(&["-C", cache_path.to_str().unwrap(), "fetch", "--depth", "1"])
+            .args(["-C", cache_path.to_str().unwrap(), "fetch", "--depth", "1"])
             .output()
             .await?;
 
@@ -122,7 +101,7 @@ pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<bo
         }
 
         let output = Command::new("git")
-            .args(&[
+            .args([
                 "-C",
                 cache_path.to_str().unwrap(),
                 "rev-list",
@@ -139,7 +118,7 @@ pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<bo
         if behind_count > 0 {
             // Reset logic here
             let output = Command::new("git")
-                .args(&[
+                .args([
                     "-C",
                     cache_path.to_str().unwrap(),
                     "reset",
@@ -156,16 +135,36 @@ pub async fn download_and_cache(source: &str, cache_path: &PathBuf) -> Result<bo
         } else {
             Ok(false)
         }
+    } else {
+        println!("Cloning repository to cache...");
+        let output = Command::new("git")
+            .args([
+                "clone",
+                "--depth",
+                "1",
+                &git_url,
+                cache_path.to_str().unwrap(),
+            ])
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            return Err(eyre!(
+                "Failed to clone repository: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+        Ok(true)
     }
 }
 
-fn construct_git_url(source: &str) -> Result<String> {
+fn construct_git_url(source: &str) -> String {
     match source.split_once(':') {
-        Some(("github", repo)) => Ok(format!("https://github.com/{}.git", repo)),
-        Some(("codeberg", repo)) => Ok(format!("https://codeberg.org/{}.git", repo)),
-        Some(("gitlab", repo)) => Ok(format!("https://gitlab.com/{}.git", repo)),
-        Some(("http", _)) | Some(("https", _)) => Ok(source.to_string()),
-        _ if source.contains("://") => Ok(source.to_string()),
-        _ => Ok(format!("https://{}", source)),
+        Some(("github", repo)) => format!("https://github.com/{repo}.git"),
+        Some(("codeberg", repo)) => format!("https://codeberg.org/{repo}.git"),
+        Some(("gitlab", repo)) => format!("https://gitlab.com/{repo}.git"),
+        Some(("http" | "https", _)) => source.to_string(),
+        _ if source.contains("://") => source.to_string(),
+        _ => format!("https://{source}"),
     }
 }

@@ -28,7 +28,6 @@ impl super::Command for RemoveCommand {
                 if let Some(cache_path) = &uchrome.cache_path {
                     if cache_path.exists() {
                         fs::remove_dir_all(cache_path).await?;
-                        println!("Removed cache at {:?}", cache_path);
                     }
                 }
 
