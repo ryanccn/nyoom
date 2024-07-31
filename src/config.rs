@@ -22,6 +22,7 @@ pub struct Userchrome {
 
     #[serde(default)]
     pub configs: Vec<UserchromeConfig>,
+    pub cache_path: Option<PathBuf>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -31,6 +32,15 @@ pub struct Config {
 
     #[serde(default)]
     pub userchromes: Vec<Userchrome>,
+
+    #[serde(default = "default_cache_dir")]
+    pub cache_dir: PathBuf,
+}
+
+fn default_cache_dir() -> PathBuf {
+    dirs::cache_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("nyoom")
 }
 
 pub fn get_old_config_path() -> Result<PathBuf> {

@@ -11,6 +11,7 @@ mod config;
 mod list;
 mod preset;
 mod profile;
+mod refresh;
 mod remove;
 mod switch;
 
@@ -37,6 +38,8 @@ pub enum Commands {
     List(list::ListCommand),
     /// Add a new userchrome
     Add(add::AddCommand),
+    /// Refresh an existing userchrome from its source
+    Refresh(refresh::RefreshCommand),
     /// Remove a userchrome
     Remove(remove::RemoveCommand),
     /// Switch to a userchrome
