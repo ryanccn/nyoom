@@ -28,11 +28,10 @@ impl super::Command for AddCommand {
         let new_userchrome = config::Userchrome {
             name: self.name.clone(),
             source: self.source.clone(),
-            configs: vec![],
             clone_url: None,
+            configs: vec![],
             cache_path: Some(cache_path),
         };
-
         config::print_userchrome(&new_userchrome, false);
         config.userchromes.push(new_userchrome);
 

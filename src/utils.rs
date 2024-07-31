@@ -86,6 +86,7 @@ pub fn is_remote_source(source: &str) -> bool {
     let remote_regex = Regex::new(r"^(https?://|github:|codeberg:|gitlab:)").unwrap();
     remote_regex.is_match(source)
 }
+
 pub async fn download_and_cache(source: &str, cache_path: &Path) -> Result<bool> {
     let git_url = construct_git_url(source);
 

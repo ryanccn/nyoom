@@ -167,41 +167,38 @@ async fn handle_source(source: &str, target_dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
+async fn get_source_dir(userchrome: &Userchrome) -> Result<PathBuf> {
+    if let Some(cache_path) = &userchrome.cache_path {
+        Ok(cache_path.clone())
+    } else {
+        let temp_path = env::temp_dir().join(nanoid!());
+        handle_source(&userchrome.source, &temp_path).await?;
+        Ok(temp_path)
+    }
+}
+
 pub async fn switch(userchrome: &Userchrome, profile: String) -> Result<()> {
     print_userchrome(userchrome, false);
-    println!();
 
-    let mut step_counter = 1;
-
+    let source_dir = get_source_dir(userchrome).await?;
     let new_chrome_dir = Path::new(&profile).join("chrome");
-    let source_dir = userchrome.cache_path.clone().unwrap_or_else(|| {
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
-            let temp_path = env::temp_dir().join(nanoid!());
-            handle_source(&userchrome.source, &temp_path).await.unwrap();
-            temp_path
-        })
-    });
 
-    println!("{} installing userchrome", step_counter.to_string().green());
-    step_counter += 1;
+    println!("Installing userchrome and applying user.js");
 
+    // Remove existing chrome directory and copy new one
     if new_chrome_dir.exists() {
         fs::remove_dir_all(&new_chrome_dir).await?;
     }
-
     let copy_from = source_dir
         .join("chrome")
         .exists()
         .then(|| source_dir.join("chrome"))
         .unwrap_or(source_dir);
-
     utils::copy_dir_all(&copy_from, &new_chrome_dir).await?;
 
-    println!("{} applying user.js", step_counter.to_string().green());
-    step_counter += 1;
+    // Apply user.js
+    user(userchrome, &profile, &mut 1).await?;
 
-    user(userchrome, &profile, &mut step_counter).await?;
-
-    println!("{}", "done!".green());
+    println!("Userchrome installation complete!");
     Ok(())
 }

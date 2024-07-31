@@ -1,5 +1,8 @@
 use clap::Parser;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::{
+    eyre::{eyre, Result},
+    owo_colors::OwoColorize as _,
+};
 use tokio::fs;
 
 use crate::config;
@@ -22,6 +25,7 @@ impl super::Command for RemoveCommand {
 
         match res {
             Some((i, uchrome)) => {
+                println!("Removing {}!", uchrome.name.cyan());
                 config::print_userchrome(uchrome, true);
 
                 // Remove cache if it exists
