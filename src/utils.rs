@@ -1,19 +1,15 @@
-use async_recursion::async_recursion;
-use regex::Regex;
 use std::{
-    env,
-    io::{BufReader, Cursor},
+    io::Cursor,
     path::{Path, PathBuf},
     process::exit,
 };
-use tokio::fs;
-use tokio::process::Command;
 
+use async_recursion::async_recursion;
 use color_eyre::eyre::{eyre, Result};
-use nanoid::nanoid;
 use owo_colors::OwoColorize as _;
+use regex::Regex;
 use sysinfo::{ProcessRefreshKind, RefreshKind, System};
-use zip::ZipArchive;
+use tokio::{fs, process::Command, task};
 
 #[async_recursion]
 pub async fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<()> {
@@ -33,40 +29,17 @@ pub async fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<()> {
 }
 
 pub async fn download_zip(url: &str, target_dir: &PathBuf) -> Result<()> {
-    let mut resp = reqwest::get(url).await?;
-    resp = resp.error_for_status()?;
+    let bytes = reqwest::get(url).await?.bytes().await?;
+    let target_dir = target_dir.clone();
 
-    let bytes = resp.bytes().await?;
-    let reader = BufReader::new(Cursor::new(bytes));
+    task::spawn_blocking(move || -> Result<()> {
+        let reader = Cursor::new(bytes);
+        let mut archive = zip::ZipArchive::new(reader)?;
 
-    let temp_extract_path = env::temp_dir().join(nanoid!());
-
-    let mut zip = ZipArchive::new(reader)?;
-    fs::create_dir(&temp_extract_path).await?;
-    zip.extract(&temp_extract_path)?;
-
-    let mut extracted_contents = fs::read_dir(&temp_extract_path).await?;
-
-    let mut extracted_contents_size = 0;
-    let mut extracted_contents_last_path: Option<PathBuf> = None;
-
-    while let Ok(Some(f)) = extracted_contents.next_entry().await {
-        extracted_contents_last_path = f.path().into();
-        extracted_contents_size += 1;
-    }
-
-    if extracted_contents_size == 1 {
-        copy_dir_all(
-            &extracted_contents_last_path
-                .ok_or_else(|| eyre!("could not find path in unpacked directory"))?,
-            target_dir,
-        )
-        .await?;
-    } else {
-        copy_dir_all(&temp_extract_path, target_dir).await?;
-    }
-
-    fs::remove_dir_all(&temp_extract_path).await?;
+        archive.extract(&target_dir)?;
+        Ok(())
+    })
+    .await??;
 
     Ok(())
 }
@@ -91,34 +64,33 @@ pub async fn download_and_cache(source: &str, cache_path: &Path) -> Result<bool>
     let git_url = construct_git_url(source);
 
     if cache_path.exists() {
-        // Fetch logic here
-        let output = Command::new("git")
+        let fetch_output = Command::new("git")
             .args(["-C", cache_path.to_str().unwrap(), "fetch", "--depth", "1"])
             .output()
             .await?;
 
-        if !output.status.success() {
+        if !fetch_output.status.success() {
             return Err(eyre!("Failed to fetch updates"));
         }
 
-        let output = Command::new("git")
-            .args([
-                "-C",
-                cache_path.to_str().unwrap(),
-                "rev-list",
-                "HEAD...origin/HEAD",
-                "--count",
-            ])
-            .output()
-            .await?;
-
-        let behind_count = String::from_utf8_lossy(&output.stdout)
-            .trim()
-            .parse::<u32>()?;
+        let behind_count = String::from_utf8_lossy(
+            &Command::new("git")
+                .args([
+                    "-C",
+                    cache_path.to_str().unwrap(),
+                    "rev-list",
+                    "HEAD...origin/HEAD",
+                    "--count",
+                ])
+                .output()
+                .await?
+                .stdout,
+        )
+        .trim()
+        .parse::<u32>()?;
 
         if behind_count > 0 {
-            // Reset logic here
-            let output = Command::new("git")
+            Command::new("git")
                 .args([
                     "-C",
                     cache_path.to_str().unwrap(),
@@ -128,17 +100,13 @@ pub async fn download_and_cache(source: &str, cache_path: &Path) -> Result<bool>
                 ])
                 .output()
                 .await?;
-
-            if !output.status.success() {
-                return Err(eyre!("Failed to reset to latest commit"));
-            }
             Ok(true)
         } else {
             Ok(false)
         }
     } else {
         println!("Cloning repository to cache...");
-        let output = Command::new("git")
+        let clone_output = Command::new("git")
             .args([
                 "clone",
                 "--depth",
@@ -149,10 +117,10 @@ pub async fn download_and_cache(source: &str, cache_path: &Path) -> Result<bool>
             .output()
             .await?;
 
-        if !output.status.success() {
+        if !clone_output.status.success() {
             return Err(eyre!(
                 "Failed to clone repository: {}",
-                String::from_utf8_lossy(&output.stderr)
+                String::from_utf8_lossy(&clone_output.stderr)
             ));
         }
         Ok(true)
