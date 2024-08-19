@@ -19,6 +19,6 @@ reqwest = { version = "0.12.5", features = ["rustls-tls", "brotli"], default-fea
 rust-embed = "8.5.0"
 serde = { version = "1.0.204", features = ["derive"] }
 sysinfo = "0.30.13"
-tokio = { version = "1.39.1", features = ["full"] }
+tokio = { version = "1.39.3", features = ["full"] }
 toml = "0.8.16"
 zip = "2.1.5"
