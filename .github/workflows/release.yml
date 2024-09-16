@@ -37,6 +37,6 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v12
       - name: Push to FlakeHub
-        uses: DeterminateSystems/flakehub-push@v4
+        uses: DeterminateSystems/flakehub-push@v5
         with:
           visibility: public
