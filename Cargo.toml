@@ -14,7 +14,7 @@ dirs = "5.0.1"
 enum_dispatch = "0.3.13"
 nanoid = "0.4.0"
 owo-colors = "4.0.0"
-regex = "1.10.5"
+regex = "1.11.0"
 reqwest = { version = "0.12.5", features = ["rustls-tls", "brotli"], default-features = false }
 rust-embed = "8.5.0"
 serde = { version = "1.0.204", features = ["derive"] }
