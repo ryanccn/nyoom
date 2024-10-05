@@ -1,42 +1,54 @@
+# SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 name: Release
 
 on:
   push:
     tags: ["v*.*.*"]
 
-permissions:
-  contents: write
-
 jobs:
   build:
-    uses: ./.github/workflows/build.yml
-
-  publish:
-    needs: ["build"]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Upload to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/**/*
-
-  flake:
-    runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      attestations: write
+    uses: ./.github/workflows/build.yml
+
+  github:
+    name: GitHub Releases
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v12
-      - name: Push to FlakeHub
-        uses: DeterminateSystems/flakehub-push@v4
+      - name: Download artifacts
+        id: download
+        uses: actions/download-artifact@v4
         with:
-          visibility: public
+          path: /tmp/artifacts
+
+      - name: Prepare assets
+        env:
+          ARTIFACTS: ${{ steps.download.outputs.download-path }}
+        id: prepare
+        run: |
+          asset_path="/tmp/assets"
+          mkdir -p "$asset_path"
+          for artifact in "$ARTIFACTS"/*/; do
+            basename "$artifact" | \
+              xargs -I {} zip -jr "$asset_path"/{}.zip "$artifact"
+          done
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create --draft --verify-tag "$TAG" /tmp/assets/*.zip

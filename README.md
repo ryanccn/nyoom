@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+
+SPDX-License-Identifier: CC-BY-NC-SA-4.0
+-->
+
 # nyoom
 
 Firefox userchrome manager, written in [Rust](https://rust-lang.org/).
@@ -10,38 +16,27 @@ Firefox userchrome manager, written in [Rust](https://rust-lang.org/).
 
 #### Flake
 
-nyoom is published to [FlakeHub](https://flakehub.com/). You can add the input to your flake with the `fh` CLI by running `fh add ryanccn/nyoom` or adding the following to your inputs:
-
-```nix
-{
-  inputs = {
-    nyoom = {
-      url = "https://flakehub.com/f/ryanccn/nyoom/*.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
-    }
-  }
-}
-```
-
-Alternatively, you can get the main branch from GitHub directly:
-
 ```nix
 {
   inputs = {
     nyoom = {
       url = "github:ryanccn/nyoom";
       inputs.nixpkgs.follows = "nixpkgs";
-    }
-  }
+    };
+  };
+
+  outputs = inputs: {
+    # ...
+    environment.systemPackages = with pkgs; [
+      inputs.nyoom.packages.nyoom
+    ];
+  };
 }
 ```
 
 #### Profile
 
 ```bash
-# stable version
-$ nix profile install "https://flakehub.com/f/ryanccn/nyoom/*.tar.gz"
-# main branch
 $ nix profile install github:ryanccn/nyoom
 ```
 
@@ -93,6 +88,10 @@ $ nyoom profile <directory>
 
 Then, run `nyoom switch <name>` to switch to a userchrome you previously added. nyoom will retrieve the source, install the contents of the userchrome in the `chrome` directory, inject settings into `user-overrides.js` or `user.js`, and update arkenfox (thereby syncing `user-overrides.js` with `user.js`) if arkenfox is detected.
 
+You can run `nyoom update` on subsequent runs to reapply the userchrome using the latest data from remote, and use `nyoom switch out` to uninstall the userchrome.
+
 ## License
 
 GPLv3
+
+[![xkcd 2959: Beam of Light](https://imgs.xkcd.com/comics/beam_of_light.png)](https://xkcd.com/2959)

@@ -1,36 +1,40 @@
+# SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 name: Build
 
 on:
   push:
     branches: ["main"]
-    tags-ignore:
-      - "**"
   pull_request:
+    branches: ["main"]
   workflow_call:
   workflow_dispatch:
 
 jobs:
   build:
+    permissions:
+      id-token: write
+      attestations: write
+
     strategy:
-      fail-fast: false
       matrix:
         target:
-          - "x86_64-unknown-linux-musl"
-          - "aarch64-unknown-linux-musl"
-          - "x86_64-pc-windows-msvc"
-          - "x86_64-apple-darwin"
-          - "aarch64-apple-darwin"
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - aarch64-pc-windows-msvc
+          - x86_64-pc-windows-msvc
         include:
-          - target: "x86_64-unknown-linux-musl"
-            runner: ubuntu-latest
-          - target: "aarch64-unknown-linux-musl"
-            runner: ubuntu-latest
-          - target: "x86_64-pc-windows-msvc"
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+          - target: aarch64-pc-windows-msvc
             runner: windows-latest
-          - target: "x86_64-apple-darwin"
-            runner: macos-latest
-          - target: "aarch64-apple-darwin"
-            runner: macos-latest
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+      fail-fast: false
 
     runs-on: ${{ matrix.runner }}
 
@@ -42,20 +46,72 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: ${{ matrix.target }}
+          target: ${{ matrix.target }}
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Install cargo-auditable
+        run: cargo install cargo-auditable
+
       - name: Build
-        id: build
-        run: ./scripts/build.sh
-        shell: bash
+        run: cargo auditable build --release --locked --target ${{ matrix.target }}
         env:
-          TARGET: ${{ matrix.target }}
+          CARGO_PROFILE_RELEASE_LTO: "fat"
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "1"
+
+      - name: Generate build provenance attestations
+        uses: actions/attest-build-provenance@v1
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          subject-path: |
+            ./target/${{ matrix.target }}/release/nyoom
+            ./target/${{ matrix.target }}/release/nyoom.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: "error"
           name: nyoom-${{ matrix.target }}
-          path: ${{ steps.build.outputs.path }}
+          path: |
+            ./target/${{ matrix.target }}/release/nyoom
+            ./target/${{ matrix.target }}/release/nyoom.exe
+
+  linux-static:
+    permissions:
+      id-token: write
+      attestations: write
+
+    strategy:
+      matrix:
+        target:
+          - "x86_64-unknown-linux-musl"
+          - "aarch64-unknown-linux-musl"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build
+        run: nix build --fallback --print-build-logs '.#nyoom-static-${{ matrix.target }}'
+
+      - name: Generate build provenance attestations
+        uses: actions/attest-build-provenance@v1
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          subject-path: ./result/bin/nyoom
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: "error"
+          name: nyoom-${{ matrix.target }}
+          path: ./result/bin/nyoom

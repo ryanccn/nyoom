@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+version = 1
+
+[[annotations]]
+path = ["flake.lock", "Cargo.lock"]
+SPDX-FileCopyrightText = "2024 Ryan Cao <hello@ryanccn.dev>"
+SPDX-License-Identifier = "CC0-1.0"

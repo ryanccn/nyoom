@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use clap::Parser;
 use color_eyre::{
     eyre::{eyre, Result},

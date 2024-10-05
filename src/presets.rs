@@ -1,4 +1,8 @@
-use color_eyre::eyre::{eyre, Result};
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use eyre::{eyre, Result};
 use rust_embed::RustEmbed;
 
 use crate::config::Userchrome;

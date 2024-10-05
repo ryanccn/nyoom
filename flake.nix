@@ -1,70 +1,171 @@
+# SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 {
-  description = "A small CLI Firefox userchrome manager";
+  description = "Small CLI Firefox userchrome manager";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nix-filter.url = "github:numtide/nix-filter";
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    ...
-  }: let
-    version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nix-filter,
+    }:
+    let
+      inherit (nixpkgs) lib;
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
 
-    inherit (nixpkgs) lib;
+      forAllSystems = lib.genAttrs systems;
+      nixpkgsFor = forAllSystems (system: nixpkgs.legacyPackages.${system});
+    in
+    {
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
 
-    systems = [
-      "x86_64-linux"
-      "aarch64-linux"
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+          mkFlakeCheck =
+            {
+              name,
+              nativeBuildInputs ? [ ],
+              command,
+              extraConfig ? { },
+            }:
+            pkgs.stdenv.mkDerivation (
+              {
+                name = "check-${name}";
 
-    forAllSystems = fn: lib.genAttrs systems (s: fn nixpkgs.legacyPackages.${s});
-  in {
-    checks = forAllSystems (pkgs: let
-      formatter = self.formatter.${pkgs.system};
-    in {
-      fmt =
-        pkgs.runCommand "check-fmt" {}
-        ''
-          ${pkgs.lib.getExe formatter} --check ${self}
-          touch $out
-        '';
-    });
+                inherit nativeBuildInputs;
+                inherit (self.packages.${system}.nyoom) src cargoDeps;
 
-    devShells = forAllSystems (pkgs: {
-      default = pkgs.mkShell {
-        packages = with pkgs; [
-          rust-analyzer
-          rustc
-          cargo
-          rustfmt
-        ];
+                buildPhase = ''
+                  ${command}
+                  touch "$out"
+                '';
 
-        RUST_BACKTRACE = 1;
-        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+                doCheck = false;
+                dontInstall = true;
+                dontFixup = true;
+              }
+              // extraConfig
+            );
+        in
+        {
+          nixfmt = mkFlakeCheck {
+            name = "nixfmt";
+            nativeBuildInputs = with pkgs; [ nixfmt-rfc-style ];
+            command = "nixfmt --check .";
+          };
+
+          rustfmt = mkFlakeCheck {
+            name = "rustfmt";
+
+            nativeBuildInputs = with pkgs; [
+              cargo
+              rustfmt
+            ];
+
+            command = "cargo fmt --check";
+          };
+
+          clippy = mkFlakeCheck {
+            name = "clippy";
+
+            nativeBuildInputs = with pkgs; [
+              rustPlatform.cargoSetupHook
+              cargo
+              rustc
+              clippy
+              clippy-sarif
+              sarif-fmt
+            ];
+
+            command = ''
+              cargo clippy --all-features --all-targets --tests \
+                --offline --message-format=json \
+                | clippy-sarif | tee $out | sarif-fmt
+            '';
+          };
+
+          reuse = mkFlakeCheck {
+            name = "reuse";
+            extraConfig = {
+              src = self;
+            };
+
+            nativeBuildInputs = with pkgs; [
+              reuse
+            ];
+
+            command = "reuse lint";
+          };
+        }
+      );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              rustfmt
+              clippy
+              rust-analyzer
+
+              reuse
+
+              cargo-audit
+              cargo-bloat
+              cargo-expand
+
+              libiconv
+            ];
+
+            inputsFrom = [ self.packages.${system}.nyoom ];
+
+            env = {
+              RUST_BACKTRACE = 1;
+              RUST_SRC_PATH = toString pkgs.rustPlatform.rustLibSrc;
+            };
+          };
+        }
+      );
+
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
+          packages = self.overlays.default null pkgs;
+        in
+        {
+          inherit (packages) nyoom;
+          default = packages.nyoom;
+        }
+        // (lib.attrsets.mapAttrs' (
+          name: value: lib.nameValuePair "check-${name}" value
+        ) self.checks.${system})
+      );
+
+      legacyPackages = forAllSystems (
+        system: nixpkgsFor.${system}.callPackage ./nix/static.nix { inherit nix-filter self; }
+      );
+
+      overlays.default = _: prev: {
+        nyoom = prev.callPackage ./nix/package.nix { inherit nix-filter self; };
       };
-    });
 
-    packages = forAllSystems (
-      pkgs: let
-        scope = lib.makeScope pkgs.newScope;
-        fn = final: {p = self.overlays.default final pkgs;};
-        inherit (scope fn) p;
-      in
-        p // {default = p.nyoom;}
-    );
-
-    formatter = forAllSystems (p: p.alejandra);
-
-    overlays.default = _: prev: {
-      nyoom = prev.callPackage ./default.nix {
-        inherit self version;
-        inherit (prev.darwin.apple_sdk_11_0.frameworks) CoreFoundation Security SystemConfiguration;
-        inherit (prev.darwin) IOKit;
-      };
+      formatter = forAllSystems (system: nixpkgsFor.${system}.nixfmt-rfc-style);
     };
-  };
 }

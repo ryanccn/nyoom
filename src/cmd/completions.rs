@@ -1,8 +1,12 @@
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use clap_complete::{generate, Shell};
 use std::io::stdout;
 
 use clap::{CommandFactory, Parser};
-use color_eyre::eyre::Result;
+use eyre::Result;
 
 #[derive(Parser)]
 pub struct CompletionCommand {

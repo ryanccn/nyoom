@@ -1,5 +1,12 @@
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use std::path::PathBuf;
+
 use clap::{Parser, ValueHint};
-use color_eyre::eyre::Result;
+use eyre::Result;
+use owo_colors::OwoColorize as _;
 
 use crate::config;
 
@@ -7,24 +14,23 @@ use crate::config;
 pub struct ProfileCommand {
     /// Path to the profile
     #[arg(value_hint = ValueHint::DirPath)]
-    path: Option<String>,
+    path: Option<PathBuf>,
 }
 
 impl super::Command for ProfileCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         if let Some(path) = &self.path {
             let mut config = config::get_config(&global_options.config).await?;
-            config.profile.clone_from(path);
+            config.profile = Some(path.clone());
             config::set_config(&global_options.config, &config).await?;
         } else {
             let config = config::get_config(&global_options.config).await?;
             println!(
                 "{}",
-                if config.profile.is_empty() {
-                    "not set".into()
-                } else {
-                    config.profile
-                }
+                config.profile.map_or_else(
+                    || "not set".red().to_string(),
+                    |profile| profile.display().to_string()
+                )
             );
         }
 

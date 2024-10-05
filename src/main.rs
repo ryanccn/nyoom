@@ -1,11 +1,11 @@
-#![warn(clippy::all, clippy::pedantic, clippy::perf)]
-#![allow(clippy::module_name_repetitions)]
-#![forbid(unsafe_code)]
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 use clap::Parser;
 use cmd::{Cli, Command};
-use color_eyre::eyre::Result;
 use config::migrate_config;
+use eyre::Result;
 
 mod cmd;
 mod config;

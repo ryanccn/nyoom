@@ -1,5 +1,9 @@
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use clap::Parser;
-use color_eyre::eyre::{eyre, Result};
+use eyre::{eyre, Result};
 
 use crate::{config, presets};
 
@@ -16,7 +20,7 @@ impl super::Command for PresetCommand {
         if let Some(name) = &self.name {
             let preset = presets
                 .into_iter()
-                .find(|p| p.name == *name)
+                .find(|p| &p.name == name)
                 .ok_or_else(|| eyre!("no preset named {} exists!", name))?;
 
             let mut config = config::get_config(&global_options.config).await?;

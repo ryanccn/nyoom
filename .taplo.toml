@@ -1,2 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 [formatting]
 column_width = 120

@@ -1,5 +1,9 @@
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use clap::Parser;
-use color_eyre::eyre::{bail, Result};
+use eyre::{bail, Result};
 
 use crate::config;
 
@@ -23,8 +27,9 @@ impl super::Command for AddCommand {
             name: self.name.clone(),
             source: self.source.clone(),
             clone_url: None,
-            configs: vec![],
+            configs: Vec::new(),
         };
+
         config::print_userchrome(&new_userchrome, false);
         config.userchromes.push(new_userchrome);
 

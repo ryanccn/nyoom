@@ -1,4 +1,8 @@
-use color_eyre::eyre::{eyre, Result};
+// SPDX-FileCopyrightText: 2024 Ryan Cao <hello@ryanccn.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use eyre::{eyre, Result};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
@@ -26,8 +30,7 @@ pub struct Userchrome {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
-    #[serde(default)]
-    pub profile: String,
+    pub profile: Option<PathBuf>,
 
     #[serde(default)]
     pub userchromes: Vec<Userchrome>,
