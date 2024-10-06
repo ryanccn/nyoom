@@ -5,7 +5,12 @@
 use eyre::{bail, Result};
 use temp_dir::TempDir;
 
-use std::{env, path::Path, process::Stdio, sync::LazyLock};
+use std::{
+    env,
+    path::{Path, PathBuf},
+    process::Stdio,
+    sync::LazyLock,
+};
 use tokio::{fs, process::Command};
 
 use owo_colors::OwoColorize as _;
@@ -131,7 +136,7 @@ static CODEBERG_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 static GITLAB_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"cgitlab:(?P<repo>[\w\-_/]+)(#(?P<ref>[\w\-_]+))?").unwrap());
+    LazyLock::new(|| Regex::new(r"gitlab:(?P<repo>[\w\-_/]+)(#(?P<ref>[\w\-_]+))?").unwrap());
 
 async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
     if let Some(github) = GITHUB_REGEX.captures(source) {
@@ -140,37 +145,46 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
             .map_or("main", |ref_match| ref_match.into());
 
         let url = format!(
-            "https://github.com/{}/archive/refs/heads/{}.zip",
+            "https://github.com/{}/archive/refs/heads/{}.tar.gz",
             &github["repo"], &ref_str,
         );
 
-        utils::download_zip(&url, target_dir).await?;
+        utils::download_archive(&url, target_dir).await?;
     } else if let Some(codeberg) = CODEBERG_REGEX.captures(source) {
         let ref_str = codeberg
             .name("ref")
             .map_or("main", |ref_match| ref_match.into());
 
         let url = format!(
-            "https://codeberg.org/{}/archive/{}.zip",
+            "https://codeberg.org/{}/archive/{}.tar.gz",
             &codeberg["repo"], &ref_str,
         );
 
-        utils::download_zip(&url, target_dir).await?;
+        utils::download_archive(&url, target_dir).await?;
     } else if let Some(gitlab) = GITLAB_REGEX.captures(source) {
         let ref_str = gitlab
             .name("ref")
             .map_or("main", |ref_match| ref_match.into());
 
         let url = format!(
-            "https://gitlab.com/{}/-/archive/{}/source-{}.zip",
+            "https://gitlab.com/{}/-/archive/{}/source-{}.tar.gz",
             &gitlab["repo"], &ref_str, &ref_str,
         );
 
-        utils::download_zip(&url, target_dir).await?;
+        utils::download_archive(&url, target_dir).await?;
+    } else if let Some(path) = source.strip_prefix("path:") {
+        let source = PathBuf::from(path);
+        if !source.is_dir() {
+            bail!("provided path {path:?} is not a directory");
+        }
+
+        utils::copy_dir_all(&source, target_dir).await?;
     } else if let Some(url) = source.strip_prefix("url:") {
-        utils::download_zip(url, target_dir).await?;
+        utils::download_archive(url, target_dir).await?;
+    } else if source.starts_with("https://") || source.starts_with("http://") {
+        utils::download_archive(source, target_dir).await?;
     } else {
-        bail!("Invalid source specification: {}", source);
+        bail!("invalid source specification: {}", source);
     }
 
     Ok(())
@@ -202,12 +216,13 @@ pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<(
             fs::remove_dir_all(&new_chrome_dir).await?;
         }
 
-        let mut cloned_chrome_dir = temp_path.join("chrome");
-        if !cloned_chrome_dir.exists() {
-            temp_path.clone_into(&mut cloned_chrome_dir);
-        }
+        let src_chrome_dir = if temp_path.join("chrome").exists() {
+            temp_path.join("chrome")
+        } else {
+            temp_path.to_owned()
+        };
 
-        utils::copy_dir_all(&cloned_chrome_dir, &new_chrome_dir).await?;
+        utils::copy_dir_all(&src_chrome_dir, &new_chrome_dir).await?;
         fs::write(new_chrome_dir.join(".nyoom-chrome-name"), &userchrome.name).await?;
     } else {
         println!("{} removing userchrome", step_counter.to_string().green());
