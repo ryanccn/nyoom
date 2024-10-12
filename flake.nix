@@ -44,9 +44,10 @@
             pkgs.stdenv.mkDerivation (
               {
                 name = "check-${name}";
-
+                inherit (self.packages.${system}.nyoom) src;
                 inherit nativeBuildInputs;
-                inherit (self.packages.${system}.nyoom) src cargoDeps;
+
+                strictDeps = true;
 
                 buildPhase = ''
                   ${command}
@@ -81,20 +82,29 @@
           clippy = mkFlakeCheck {
             name = "clippy";
 
-            nativeBuildInputs = with pkgs; [
-              rustPlatform.cargoSetupHook
-              cargo
-              rustc
-              clippy
-              clippy-sarif
-              sarif-fmt
-            ];
+            nativeBuildInputs =
+              with pkgs;
+              [
+                rustPlatform.cargoSetupHook
+                cargo
+                rustc
+                clippy
+                clippy-sarif
+                sarif-fmt
+              ]
+              ++ lib.optionals stdenv.hostPlatform.isDarwin [
+                pkg-config
+              ];
 
             command = ''
               cargo clippy --all-features --all-targets --tests \
                 --offline --message-format=json \
                 | clippy-sarif | tee $out | sarif-fmt
             '';
+
+            extraConfig = {
+              inherit (self.packages.${system}.nyoom) cargoDeps buildInputs;
+            };
           };
 
           reuse = mkFlakeCheck {
@@ -153,9 +163,6 @@
           inherit (packages) nyoom;
           default = packages.nyoom;
         }
-        // (lib.attrsets.mapAttrs' (
-          name: value: lib.nameValuePair "check-${name}" value
-        ) self.checks.${system})
       );
 
       legacyPackages = forAllSystems (

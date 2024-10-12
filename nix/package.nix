@@ -39,7 +39,7 @@ rustPlatform.buildRustPackage rec {
     lockFile = ../Cargo.lock;
   };
 
-  buildInputs = lib.optionals stdenv.isDarwin [
+  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
     darwin.apple_sdk.frameworks.CoreFoundation
     darwin.apple_sdk.frameworks.Security
     darwin.apple_sdk.frameworks.SystemConfiguration
@@ -51,7 +51,7 @@ rustPlatform.buildRustPackage rec {
     [
       installShellFiles
     ]
-    ++ lib.optionals stdenv.isDarwin [
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [
       pkg-config
     ];
 
