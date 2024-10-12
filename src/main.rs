@@ -4,7 +4,6 @@
 
 use clap::Parser;
 use cmd::{Cli, Command};
-use config::migrate_config;
 use eyre::Result;
 
 mod cmd;
@@ -17,7 +16,6 @@ mod utils;
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
-    migrate_config().await?;
     let cli = Cli::parse();
     cli.command.action(&cli).await?;
 

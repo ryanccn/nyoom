@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use etcetera::AppStrategy as _;
 use eyre::{eyre, Result};
 use std::path::{Path, PathBuf};
 use tokio::fs;
@@ -28,7 +29,7 @@ pub struct Userchrome {
     pub configs: Vec<UserchromeConfig>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 pub struct Config {
     pub profile: Option<PathBuf>,
 
@@ -36,60 +37,25 @@ pub struct Config {
     pub userchromes: Vec<Userchrome>,
 }
 
-pub fn get_old_config_path() -> Result<PathBuf> {
-    dirs::config_dir()
-        .ok_or_else(|| eyre!("Unable to locate config dirs"))
-        .map(|dir| dir.join("nyoom.toml"))
+fn strategy() -> Result<impl etcetera::AppStrategy> {
+    etcetera::choose_app_strategy(etcetera::AppStrategyArgs {
+        top_level_domain: "dev.ryanccn".to_owned(),
+        author: "Ryan Cao".to_owned(),
+        app_name: "nyoom".to_owned(),
+    })
+    .map_err(|e| e.into())
 }
 
 pub fn get_default_config_path() -> Result<PathBuf> {
-    dirs::config_dir()
-        .ok_or_else(|| eyre!("Unable to locate config dirs"))
-        .map(|dir| dir.join("nyoom").join("nyoom.toml"))
-}
-
-pub async fn migrate_config() -> Result<()> {
-    let old = get_old_config_path()?;
-    let new = get_default_config_path()?;
-
-    if old.exists() && !new.exists() {
-        fs::create_dir_all(
-            new.parent()
-                .ok_or_else(|| eyre!("Could not obtain parent directory of config"))?,
-        )
-        .await?;
-        fs::copy(old, new).await?;
-    }
-
-    Ok(())
+    Ok(strategy()?.config_dir().join("nyoom.toml"))
 }
 
 pub async fn get_config(path: &Path) -> Result<Config> {
-    let f = if Path::new(path).exists() {
-        fs::read_to_string(path).await?
-    } else {
-        String::new()
-    };
-    let mut config: Config = toml::from_str(&f)?;
-
-    let mut migrated = false;
-
-    for uc in &mut config.userchromes {
-        if let Some(old_clone_url) = &uc.clone_url {
-            uc.source = old_clone_url
-                .replace("https://github.com/", "github:")
-                .replace(".git", "");
-            uc.clone_url = None;
-
-            migrated = true;
-        }
+    match fs::read_to_string(path).await {
+        Ok(s) => toml::from_str(&s).map_err(Into::into),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+        Err(e) => Err(e.into()),
     }
-
-    if migrated {
-        set_config(path, &config).await?;
-    }
-
-    Ok(config)
 }
 
 pub async fn set_config(path: &Path, config: &Config) -> Result<()> {
