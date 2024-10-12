@@ -16,7 +16,7 @@ impl super::Command for UpdateCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         let config = config::get_config(&global_options.config).await?;
 
-        utils::check_firefox()?;
+        utils::check_firefox();
 
         if let Some(profile) = &config.profile {
             let current = fs::read_to_string(profile.join("chrome").join(".nyoom-chrome-name"))

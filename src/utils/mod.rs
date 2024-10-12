@@ -31,18 +31,13 @@ pub async fn copy_dir_all(src: &Path, dst: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn check_firefox() -> Result<()> {
+pub fn check_firefox() {
     let system =
         System::new_with_specifics(RefreshKind::new().with_processes(ProcessRefreshKind::new()));
-    let is_running = system
-        .processes_by_name(&"firefox".parse::<OsString>()?)
-        .count()
-        != 0;
+    let is_running = system.processes_by_name(&OsString::from("firefox")).count() != 0;
 
     if is_running {
         println!("{}", "Firefox is running, refusing to continue!".yellow());
         exit(1);
     }
-
-    Ok(())
 }

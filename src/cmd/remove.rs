@@ -24,7 +24,7 @@ impl super::Command for RemoveCommand {
             .userchromes
             .iter()
             .enumerate()
-            .find(|(_, uchrome)| uchrome.name.eq(&self.name));
+            .find(|(_, uchrome)| uchrome.name == self.name);
 
         match res {
             Some((i, uchrome)) => {

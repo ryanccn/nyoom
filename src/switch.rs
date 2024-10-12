@@ -5,12 +5,7 @@
 use eyre::{bail, Result};
 use temp_dir::TempDir;
 
-use std::{
-    env,
-    path::{Path, PathBuf},
-    process::Stdio,
-    sync::LazyLock,
-};
+use std::{env, path::Path, process::Stdio, sync::LazyLock};
 use tokio::{fs, process::Command};
 
 use owo_colors::OwoColorize as _;
@@ -78,8 +73,8 @@ async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>) -> Result<()
     }
 
     let mut ret_lines: Vec<String> = Vec::new();
-    let start_idx = lines.iter().position(|k| k.eq(&START_LINE));
-    let end_idx = lines.iter().position(|k| k.eq(&END_LINE));
+    let start_idx = lines.iter().position(|k| k == START_LINE);
+    let end_idx = lines.iter().position(|k| k == END_LINE);
 
     let mut ret_set = false;
 
@@ -173,12 +168,12 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
 
         utils::download_archive(&url, target_dir).await?;
     } else if let Some(path) = source.strip_prefix("path:") {
-        let source = PathBuf::from(path);
+        let source = Path::new(path);
         if !source.is_dir() {
             bail!("provided path {path:?} is not a directory");
         }
 
-        utils::copy_dir_all(&source, target_dir).await?;
+        utils::copy_dir_all(source, target_dir).await?;
     } else if let Some(url) = source.strip_prefix("url:") {
         utils::download_archive(url, target_dir).await?;
     } else if source.starts_with("https://") || source.starts_with("http://") {

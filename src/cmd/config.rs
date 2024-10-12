@@ -49,7 +49,7 @@ impl super::Command for ConfigCommand {
                 let uc = config
                     .userchromes
                     .iter()
-                    .find(|d| d.name.eq(name))
+                    .find(|d| &d.name == name)
                     .ok_or_else(|| eyre!("no userchrome with name {} exists", name))?;
 
                 for c in &uc.configs {
@@ -69,7 +69,7 @@ impl super::Command for ConfigCommand {
                 let chrome = config
                     .userchromes
                     .iter_mut()
-                    .find(|d| d.name.eq(name))
+                    .find(|d| &d.name == name)
                     .ok_or_else(|| eyre!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().find(|c| c.key == *key);
@@ -95,7 +95,7 @@ impl super::Command for ConfigCommand {
                 let chrome = config
                     .userchromes
                     .iter_mut()
-                    .find(|d| d.name.eq(name))
+                    .find(|d| &d.name == name)
                     .ok_or_else(|| eyre!("no userchrome with name {} exists", name))?;
 
                 let existing = chrome.configs.iter_mut().position(|c| c.key == *key);
