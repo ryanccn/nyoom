@@ -5,7 +5,7 @@
 use eyre::{bail, Result};
 use temp_dir::TempDir;
 
-use std::{env, path::Path, process::Stdio, sync::LazyLock};
+use std::{env, io, path::Path, process::Stdio, sync::LazyLock};
 use tokio::{fs, process::Command};
 
 use owo_colors::OwoColorize as _;
@@ -48,11 +48,18 @@ const START_LINE: &str = "/** nyoom-managed config; do not edit */";
 const END_LINE: &str = "/** end of nyoom-managed config */";
 
 async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>) -> Result<()> {
-    let contents = fs::read_to_string(f).await?;
-    let lines = contents
-        .split('\n')
-        .map(|s| s.to_owned())
-        .collect::<Vec<_>>();
+    let contents = match fs::read_to_string(f).await {
+        Ok(contents) => contents,
+        Err(err) => {
+            if err.kind() == io::ErrorKind::NotFound {
+                String::new()
+            } else {
+                return Err(err.into());
+            }
+        }
+    };
+
+    let lines = contents.lines().map(|s| s.to_owned()).collect::<Vec<_>>();
 
     let mut new_lines = vec![
         "user_pref(\"toolkit.legacyUserProfileCustomizations.stylesheets\", true);".to_owned(),
@@ -76,18 +83,11 @@ async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>) -> Result<()
     let start_idx = lines.iter().position(|k| k == START_LINE);
     let end_idx = lines.iter().position(|k| k == END_LINE);
 
-    let mut ret_set = false;
-
-    if let Some(start_idx) = start_idx {
-        if let Some(end_idx) = end_idx {
-            ret_lines.extend(lines[0..=start_idx].to_vec());
-            ret_lines.append(&mut new_lines);
-            ret_lines.extend(lines[end_idx..].to_vec());
-            ret_set = true;
-        }
-    }
-
-    if !ret_set {
+    if let (Some(start_idx), Some(end_idx)) = (start_idx, end_idx) {
+        ret_lines.extend(lines[0..=start_idx].to_vec());
+        ret_lines.append(&mut new_lines);
+        ret_lines.extend(lines[end_idx..].to_vec());
+    } else {
         ret_lines.clone_from(&lines);
         ret_lines.push(START_LINE.to_owned());
         ret_lines.append(&mut new_lines);

@@ -16,17 +16,17 @@ Set Theme "Catppuccin Macchiato"
 
 Hide
 
-Type@0 'set -x NYOOM_TEMP_CONFIG "$(mktemp -d)/nyoom.toml"' Enter Sleep 1s
-Type@0 'set -x NYOOM_TEMP_PROFILE "$(mktemp -d)"' Enter Sleep 1s
+Type@0 'set nyoom_temp_config "$(mktemp -d)/nyoom.toml"' Enter Sleep 1s
+Type@0 'set nyoom_temp_profile "$(mktemp -d)"' Enter Sleep 1s
 
-Type@0 'touch "$NYOOM_TEMP_PROFILE/user-overrides.js"' Enter Sleep 1s
-Type@0 'touch "$NYOOM_TEMP_PROFILE/user.js"' Enter Sleep 1s
-Type@0 'echo "#!/bin/sh" > "$NYOOM_TEMP_PROFILE/updater.sh" && chmod +x "$NYOOM_TEMP_PROFILE/updater.sh"' Enter Sleep 1s
-Type@0 'echo "#!/bin/sh" > "$NYOOM_TEMP_PROFILE/prefsCleaner.sh" && chmod +x "$NYOOM_TEMP_PROFILE/prefsCleaner.sh"' Enter Sleep 1s
+Type@0 'touch "$nyoom_temp_profile/user-overrides.js"' Enter Sleep 1s
+Type@0 'touch "$nyoom_temp_profile/user.js"' Enter Sleep 1s
+Type@0 'echo "#!/bin/sh" > "$nyoom_temp_profile/updater.sh" && chmod +x "$nyoom_temp_profile/updater.sh"' Enter Sleep 1s
+Type@0 'echo "#!/bin/sh" > "$nyoom_temp_profile/prefsCleaner.sh" && chmod +x "$nyoom_temp_profile/prefsCleaner.sh"' Enter Sleep 1s
 
-Type@0 'alias nyoom="./target/release/nyoom -c $NYOOM_TEMP_CONFIG"' Enter Sleep 1s
+Type@0 'alias nyoom="./target/release/nyoom -c $nyoom_temp_config"' Enter Sleep 1s
 Type@0 'alias ls="eza" cat="bat --style=plain"' Enter Sleep 1s
-Type@0 'nyoom profile "$NYOOM_TEMP_PROFILE"' Enter Sleep 1s
+Type@0 'nyoom profile "$nyoom_temp_profile"' Enter Sleep 1s
 
 Type@0 'fish_config theme choose "Catppuccin Macchiato"' Enter Sleep 1s
 Type@0 'set fish_autosuggestion_enabled 0' Enter Sleep 1s
@@ -76,7 +76,7 @@ Sleep 10s
 Screenshot .github/demo.png
 
 Hide
-Type 'cd "$NYOOM_TEMP_PROFILE"' Enter
+Type 'cd "$nyoom_temp_profile"' Enter
 Type 'clear' Enter
 Sleep 1s
 Show
@@ -88,4 +88,4 @@ Type 'cat user-overrides.js' Sleep 500ms Enter
 Sleep 10s
 
 Hide
-Type 'rm -rf "$NYOOM_TEMP_PROFILE" "$NYOOM_TEMP_CONFIG"' Enter
+Type 'rm -rf "$nyoom_temp_profile" "$nyoom_temp_config"' Enter
