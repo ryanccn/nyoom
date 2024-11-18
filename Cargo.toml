@@ -19,7 +19,7 @@ color-eyre = "0.6.3"
 enum_dispatch = "0.3.13"
 etcetera = "0.8.0"
 eyre = "0.6.12"
-flate2 = "1.0.34"
+flate2 = "1.0.35"
 owo-colors = "4.1.0"
 regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["rustls-tls", "brotli"], default-features = false }
