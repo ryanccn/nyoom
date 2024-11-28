@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use clap::Parser;
-use color_eyre::{
-    eyre::{eyre, Result},
-    owo_colors::OwoColorize as _,
-};
+use eyre::{eyre, Result};
+
+use anstream::println;
+use owo_colors::OwoColorize as _;
 
 use crate::config;
 

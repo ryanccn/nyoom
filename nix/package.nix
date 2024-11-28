@@ -21,9 +21,7 @@ let
 in
 rustPlatform.buildRustPackage rec {
   pname = passthru.cargoToml.package.name;
-  version = passthru.cargoToml.package.version + "-unstable-${year}-${month}-${day}";
-
-  strictDeps = true;
+  version = "${passthru.cargoToml.package.version}-unstable-${year}-${month}-${day}";
 
   src = nix-filter.lib.filter {
     root = self;
@@ -38,14 +36,6 @@ rustPlatform.buildRustPackage rec {
   cargoLock = {
     lockFile = ../Cargo.lock;
   };
-
-  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
-    darwin.apple_sdk.frameworks.CoreFoundation
-    darwin.apple_sdk.frameworks.Security
-    darwin.apple_sdk.frameworks.SystemConfiguration
-    darwin.apple_sdk.frameworks.IOKit
-    darwin.libiconv
-  ];
 
   nativeBuildInputs =
     [

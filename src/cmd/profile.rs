@@ -6,6 +6,8 @@ use std::path::PathBuf;
 
 use clap::{Parser, ValueHint};
 use eyre::{bail, Result};
+
+use anstream::println;
 use owo_colors::OwoColorize as _;
 
 use crate::config;

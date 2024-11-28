@@ -8,6 +8,7 @@ use temp_dir::TempDir;
 use std::{env, io, path::Path, process::Stdio, sync::LazyLock};
 use tokio::{fs, process::Command};
 
+use anstream::println;
 use owo_colors::OwoColorize as _;
 use regex::Regex;
 
@@ -144,7 +145,7 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
             &github["repo"], &ref_str,
         );
 
-        utils::download_archive(&url, target_dir).await?;
+        utils::download::archive(&url, target_dir).await?;
     } else if let Some(codeberg) = CODEBERG_REGEX.captures(source) {
         let ref_str = codeberg
             .name("ref")
@@ -155,7 +156,7 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
             &codeberg["repo"], &ref_str,
         );
 
-        utils::download_archive(&url, target_dir).await?;
+        utils::download::archive(&url, target_dir).await?;
     } else if let Some(gitlab) = GITLAB_REGEX.captures(source) {
         let ref_str = gitlab
             .name("ref")
@@ -166,7 +167,7 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
             &gitlab["repo"], &ref_str, &ref_str,
         );
 
-        utils::download_archive(&url, target_dir).await?;
+        utils::download::archive(&url, target_dir).await?;
     } else if let Some(path) = source.strip_prefix("path:") {
         let source = Path::new(path);
         if !source.is_dir() {
@@ -175,9 +176,9 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
 
         utils::copy_dir_all(source, target_dir).await?;
     } else if let Some(url) = source.strip_prefix("url:") {
-        utils::download_archive(url, target_dir).await?;
+        utils::download::archive(url, target_dir).await?;
     } else if source.starts_with("https://") || source.starts_with("http://") {
-        utils::download_archive(source, target_dir).await?;
+        utils::download::archive(source, target_dir).await?;
     } else {
         bail!("invalid source specification: {}", source);
     }
@@ -203,6 +204,7 @@ pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<(
         handle_source(&userchrome.source, temp_path).await?;
 
         println!("{} installing userchrome", step_counter.to_string().green());
+        println!("{} {}", "╰".cyan().dimmed(), profile.display().dimmed());
         step_counter += 1;
 
         let new_chrome_dir = profile.join("chrome");

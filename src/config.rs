@@ -7,6 +7,7 @@ use eyre::{eyre, Result};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
+use anstream::println;
 use owo_colors::OwoColorize as _;
 use serde::{Deserialize, Serialize};
 

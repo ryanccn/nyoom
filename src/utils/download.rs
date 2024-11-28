@@ -6,9 +6,13 @@ use std::{
     io::{BufReader, Cursor},
     path::Path,
 };
-use temp_dir::TempDir;
 use tokio::fs;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt as _};
+
+use anstream::{eprint, stderr};
+use crossterm::{cursor, terminal, ExecutableCommand as _};
+use owo_colors::OwoColorize as _;
+use temp_dir::TempDir;
 
 use bzip2::bufread::BzDecoder;
 use flate2::bufread::GzDecoder;
@@ -44,10 +48,40 @@ pub async fn archive(url: &str, target_dir: &Path) -> Result<()> {
         .and_then(|s| s.to_str())
         .ok_or_else(|| eyre!("could not infer file extension"))?;
 
-    let resp = reqwest::get(url).await?.error_for_status()?;
+    eprint!("{} {}  ", "╰".cyan().dimmed(), url.dimmed());
 
-    let bytes = resp.bytes().await?;
-    let reader = BufReader::new(Cursor::new(bytes));
+    stderr().execute(cursor::SavePosition)?;
+
+    let mut resp = reqwest::get(url).await?.error_for_status()?.bytes_stream();
+    let mut data: Vec<u8> = Vec::new();
+
+    while let Some(chunk) = resp.next().await {
+        data.extend(chunk?);
+
+        stderr()
+            .execute(cursor::RestorePosition)?
+            .execute(terminal::Clear(terminal::ClearType::UntilNewLine))?;
+
+        eprint!(
+            "{}",
+            humansize::format_size(data.len(), humansize::DECIMAL)
+                .cyan()
+                .dimmed(),
+        );
+    }
+
+    stderr()
+        .execute(cursor::RestorePosition)?
+        .execute(terminal::Clear(terminal::ClearType::UntilNewLine))?;
+
+    eprintln!(
+        "{}",
+        humansize::format_size(data.len(), humansize::DECIMAL)
+            .green()
+            .dimmed(),
+    );
+
+    let reader = BufReader::new(Cursor::new(data));
 
     let temp_extract_dir = TempDir::new()?;
     let temp_extract_path = temp_extract_dir.path();

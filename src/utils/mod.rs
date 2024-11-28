@@ -9,10 +9,11 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 
 use async_recursion::async_recursion;
 use eyre::Result;
+
+use anstream::println;
 use owo_colors::OwoColorize as _;
 
-mod download;
-pub use download::archive as download_archive;
+pub mod download;
 
 #[async_recursion]
 pub async fn copy_dir_all(src: &Path, dst: &Path) -> Result<()> {
