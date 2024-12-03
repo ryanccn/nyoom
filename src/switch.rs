@@ -180,7 +180,7 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
     } else if source.starts_with("https://") || source.starts_with("http://") {
         utils::download::archive(source, target_dir).await?;
     } else {
-        bail!("invalid source specification: {}", source);
+        bail!("invalid source specification: {:?}", source);
     }
 
     Ok(())

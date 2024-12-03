@@ -25,7 +25,7 @@ impl super::Command for SwitchCommand {
             } else if let Some(u) = config.userchromes.iter().find(|c| c.name == self.name) {
                 switch::switch(Some(u), profile).await?;
             } else {
-                bail!("no userchrome with name {} found!", self.name);
+                bail!("no userchrome with name {:?} found!", self.name);
             };
         } else {
             bail!("no profile configured");
