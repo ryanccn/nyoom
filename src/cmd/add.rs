@@ -20,17 +20,16 @@ impl super::Command for AddCommand {
         let mut config = config::get_config(&global_options.config).await?;
 
         if config.userchromes.iter().any(|uc| uc.name == self.name) {
-            bail!("the userchrome {} already exists!", self.name);
+            bail!("the userchrome {:?} already exists!", self.name);
         }
 
         let new_userchrome = config::Userchrome {
             name: self.name.clone(),
             source: self.source.clone(),
-            clone_url: None,
             configs: Vec::new(),
         };
 
-        config::print_userchrome(&new_userchrome, false);
+        config::print_userchrome(&new_userchrome, false, &config::PrintContext::Added);
         config.userchromes.push(new_userchrome);
 
         config::set_config(&global_options.config, &config).await?;

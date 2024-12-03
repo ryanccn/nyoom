@@ -5,9 +5,6 @@
 use clap::Parser;
 use eyre::{eyre, Result};
 
-use anstream::println;
-use owo_colors::OwoColorize as _;
-
 use crate::config;
 
 #[derive(Parser)]
@@ -28,15 +25,14 @@ impl super::Command for RemoveCommand {
 
         match res {
             Some((i, uchrome)) => {
-                println!("Removing {}!", uchrome.name.cyan());
-                config::print_userchrome(uchrome, true);
+                config::print_userchrome(uchrome, true, &config::PrintContext::Removed);
 
                 config.userchromes.remove(i);
                 config::set_config(&global_options.config, &config).await?;
                 Ok(())
             }
             None => Err(eyre!(
-                "no userchrome with name {} found to remove!",
+                "no userchrome with name {:?} found to remove!",
                 self.name
             )),
         }

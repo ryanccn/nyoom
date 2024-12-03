@@ -5,7 +5,7 @@
 Output .github/demo.gif
 
 Set Shell "fish"
-Set FontFamily "RyanTerm Nerd Font"
+Set FontFamily "Ryan Term"
 Set FontSize 40
 Set LineHeight 1.5
 Set Framerate 60

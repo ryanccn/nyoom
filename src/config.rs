@@ -23,9 +23,6 @@ pub struct Userchrome {
     pub name: String,
     pub source: String,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub clone_url: Option<String>,
-
     #[serde(default)]
     pub configs: Vec<UserchromeConfig>,
 }
@@ -62,7 +59,7 @@ pub async fn get_config(path: &Path) -> Result<Config> {
 pub async fn set_config(path: &Path, config: &Config) -> Result<()> {
     fs::create_dir_all(
         path.parent()
-            .ok_or_else(|| eyre!("Could not obtain parent directory of config"))?,
+            .ok_or_else(|| eyre!("could not obtain parent directory of config"))?,
     )
     .await?;
 
@@ -85,21 +82,47 @@ pub fn format_userchrome_config(c: &UserchromeConfig) -> String {
     )
 }
 
-pub fn print_userchrome(userchrome: &Userchrome, short: bool) {
-    println!(
-        "{} {} {}",
-        "·".cyan(),
-        userchrome.name.cyan(),
-        userchrome.source.dimmed()
-    );
+#[derive(Debug, Clone, Default)]
+pub enum PrintContext {
+    #[default]
+    Normal,
+    Added,
+    Removed,
+}
 
-    let slice_len = if short {
-        userchrome.configs.len().min(3)
+pub fn print_userchrome(userchrome: &Userchrome, short: bool, context: &PrintContext) {
+    match context {
+        PrintContext::Normal => {
+            println!(
+                "{} {} {}",
+                "·".cyan(),
+                userchrome.name.cyan(),
+                userchrome.source.dimmed()
+            );
+        }
+        PrintContext::Added => {
+            println!(
+                "{} {} {}",
+                "+".green(),
+                userchrome.name.green(),
+                userchrome.source.dimmed()
+            );
+        }
+        PrintContext::Removed => {
+            println!(
+                "{} {} {}",
+                "-".red(),
+                userchrome.name.red(),
+                userchrome.source.dimmed()
+            );
+        }
+    }
+
+    for c in if short {
+        &userchrome.configs[..userchrome.configs.len().min(3)]
     } else {
-        userchrome.configs.len()
-    };
-
-    for c in &userchrome.configs[..slice_len] {
+        &userchrome.configs
+    } {
         println!("    {}", format_userchrome_config(c));
     }
 

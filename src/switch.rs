@@ -13,7 +13,7 @@ use owo_colors::OwoColorize as _;
 use regex::Regex;
 
 use crate::{
-    config::{print_userchrome, Userchrome, UserchromeConfig},
+    config::{print_userchrome, PrintContext, Userchrome, UserchromeConfig},
     utils,
 };
 
@@ -188,7 +188,7 @@ async fn handle_source(source: &str, target_dir: &Path) -> Result<()> {
 
 pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<()> {
     if let Some(userchrome) = userchrome {
-        print_userchrome(userchrome, false);
+        print_userchrome(userchrome, false, &PrintContext::Normal);
         println!();
     }
 
