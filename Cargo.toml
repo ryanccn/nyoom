@@ -28,7 +28,7 @@ regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["rustls-tls", "stream", "brotli", "zstd", "gzip"], default-features = false }
 rust-embed = "8.5.0"
 serde = { version = "1.0.215", features = ["derive"] }
-sysinfo = { version = "0.32.1", features = ["system"], default-features = false }
+sysinfo = { version = "0.33.0", features = ["system"], default-features = false }
 tar = "0.4.43"
 temp-dir = "0.1.14"
 tokio = { version = "1.41.1", features = ["full"] }
