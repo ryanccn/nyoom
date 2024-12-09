@@ -32,7 +32,7 @@ sysinfo = { version = "0.32.1", features = ["system"], default-features = false 
 tar = "0.4.43"
 temp-dir = "0.1.14"
 tokio = { version = "1.41.1", features = ["full"] }
-tokio-stream = { version = "0.1.16", features = ["full"] }
+tokio-stream = { version = "0.1.17", features = ["full"] }
 toml = "0.8.19"
 xz2 = "0.1.7"
 zip = "2.2.1"
