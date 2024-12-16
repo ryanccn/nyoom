@@ -13,7 +13,7 @@ publish = false
 [dependencies]
 anstream = "0.6.18"
 async-recursion = "1.1.1"
-bzip2 = "0.4.4"
+bzip2 = "0.5.0"
 clap = { version = "4.5.21", features = ["derive"] }
 clap_complete = "4.5.38"
 color-eyre = "0.6.3"
