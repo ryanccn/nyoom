@@ -6,7 +6,6 @@
   lib,
   stdenv,
   rustPlatform,
-  darwin,
   installShellFiles,
   nix-filter,
   pkg-config,
@@ -45,8 +44,8 @@ rustPlatform.buildRustPackage rec {
       pkg-config
     ];
 
-  postInstall = lib.optionalString (stdenv.hostPlatform == stdenv.buildPlatform) ''
-    installShellCompletion --cmd nyoom \
+  postInstall = lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
+    installShellCompletion --cmd "${pname}" \
       --bash <("$out/bin/${pname}" completions bash) \
       --zsh <("$out/bin/${pname}" completions zsh) \
       --fish <("$out/bin/${pname}" completions fish)

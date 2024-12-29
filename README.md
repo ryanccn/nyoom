@@ -25,12 +25,14 @@ Firefox userchrome manager, written in [Rust](https://rust-lang.org/).
     };
   };
 
-  outputs = inputs: {
-    # ...
-    environment.systemPackages = with pkgs; [
-      inputs.nyoom.packages.nyoom
-    ];
-  };
+  outputs =
+    { ... }@inputs:
+    {
+      # ...
+      environment.systemPackages = with pkgs; [
+        inputs.nyoom.packages.${pkgs.system}.nyoom
+      ];
+    };
 }
 ```
 
@@ -44,11 +46,9 @@ $ nix profile install github:ryanccn/nyoom
 
 You can download pre-built binaries from [GitHub Releases](https://github.com/ryanccn/nyoom/releases/latest). Builds are available for:
 
-- macOS amd64 (Apple Silicon)
-- macOS aarch64 (Intel)
-- Linux amd64 (statically linked musl)
-- Linux aarch64 (statically linked musl)
-- Windows amd64 (dynamically linked MSVC)
+- macOS aarch64, x86_64
+- Linux x86_64, aarch64 (static)
+- Windows x86_64, aarch64 (dynamic, MSVC)
 
 ## Usage
 
@@ -72,7 +72,7 @@ Then, to specify config options specific to a userchrome, use the `nyoom config`
 
 ```bash
 $ nyoom config set <name> <key> <value>        # value is treated as string
-$ nyoom config set --raw <name> <key> <value>  # value is treated as a value
+$ nyoom config set --raw <name> <key> <value>  # value is treated as a JavaScript value
 $ nyoom config unset <name> <key>
 $ nyoom config list
 ```
