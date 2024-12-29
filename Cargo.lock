@@ -235,6 +235,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bzip2"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bafdbf26611df8c14810e268ddceda071c297570a5fb360ceddf617fe417ef58"
+dependencies = [
+ "bzip2-sys",
+ "libc",
+]
+
+[[package]]
 name = "bzip2-sys"
 version = "0.1.11+1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1153,7 +1163,7 @@ version = "0.10.0"
 dependencies = [
  "anstream",
  "async-recursion",
- "bzip2",
+ "bzip2 0.5.0",
  "clap",
  "clap_complete",
  "color-eyre",
@@ -2674,7 +2684,7 @@ checksum = "99d52293fc86ea7cf13971b3bb81eb21683636e7ae24c729cdaf1b7c4157a352"
 dependencies = [
  "aes",
  "arbitrary",
- "bzip2",
+ "bzip2 0.4.4",
  "constant_time_eq",
  "crc32fast",
  "crossbeam-utils",
