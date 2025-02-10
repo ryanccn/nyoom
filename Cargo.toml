@@ -33,7 +33,7 @@ tar = "0.4.43"
 temp-dir = "0.1.14"
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-stream = { version = "0.1.17", features = ["full"] }
-toml = "0.8.19"
+toml = "0.8.20"
 xz2 = "0.1.7"
 zip = "2.2.2"
 zstd = "0.13.2"
