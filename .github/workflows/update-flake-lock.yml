@@ -22,11 +22,12 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
+        with:
+          diagnostic-endpoint: ""
 
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
           pr-title: "build(deps): update flake.lock"
           commit-msg: "build(deps): update flake.lock"
-          pr-reviewers: ryanccn
           pr-labels: dependencies, nix
