@@ -5,21 +5,19 @@
 use clap::Parser;
 use eyre::{bail, eyre, Result};
 
-use crate::{config, presets};
+use crate::{config, presets::PRESETS};
 
 #[derive(Parser)]
 pub struct PresetCommand {
-    /// Name of the preset
+    /// Name of the preset to add
     name: Option<String>,
 }
 
 impl super::Command for PresetCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
-        let presets = presets::get_presets()?;
-
         if let Some(name) = &self.name {
-            let preset = presets
-                .into_iter()
+            let preset = PRESETS
+                .iter()
                 .find(|p| &p.name == name)
                 .ok_or_else(|| eyre!("no preset named {:?} exists!", name))?;
 
@@ -29,13 +27,13 @@ impl super::Command for PresetCommand {
                 bail!("the userchrome {:?} already exists!", self.name);
             }
 
-            config::print_userchrome(&preset, false, &config::PrintContext::Added);
-            config.userchromes.push(preset);
+            config::print_userchrome(preset, false, &config::PrintContext::Added);
+            config.userchromes.push(preset.to_owned());
 
             config::set_config(&global_options.config, &config).await?;
         } else {
-            for p in presets {
-                config::print_userchrome(&p, true, &config::PrintContext::Normal);
+            for p in PRESETS.iter() {
+                config::print_userchrome(p, true, &config::PrintContext::Normal);
             }
         }
 

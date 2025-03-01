@@ -9,7 +9,7 @@ use crate::{config, switch, utils};
 
 #[derive(Parser)]
 pub struct SwitchCommand {
-    /// Name of the userchrome
+    /// Name of the userchrome to install (use `out` to uninstall the current userchrome, if any)
     name: String,
 }
 
@@ -17,7 +17,9 @@ impl super::Command for SwitchCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         let config = config::get_config(&global_options.config).await?;
 
-        utils::check_firefox();
+        if !global_options.no_running_check {
+            utils::check_firefox();
+        }
 
         if let Some(profile) = &config.profile {
             if self.name == "out" {

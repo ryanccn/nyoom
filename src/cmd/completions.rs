@@ -10,7 +10,7 @@ use eyre::Result;
 
 #[derive(Parser)]
 pub struct CompletionCommand {
-    /// Shell
+    /// Shell to generate completions for
     #[arg(value_enum)]
     shell: Shell,
 }

@@ -5,13 +5,13 @@
 use clap::Parser;
 use eyre::{bail, Result};
 
-use crate::config;
+use crate::{config, source::ParsedSource};
 
 #[derive(Parser)]
 pub struct AddCommand {
     /// Name of the userchrome
     name: String,
-    /// Git clone URL
+    /// Source specification
     source: String,
 }
 
@@ -23,9 +23,15 @@ impl super::Command for AddCommand {
             bail!("the userchrome {:?} already exists!", self.name);
         }
 
+        let parsed: ParsedSource = self.source.parse()?;
+
         let new_userchrome = config::Userchrome {
             name: self.name.clone(),
-            source: self.source.clone(),
+            source: if parsed.should_canonicalize() {
+                parsed.to_string()
+            } else {
+                self.source.clone()
+            },
             configs: Vec::new(),
         };
 

@@ -59,8 +59,8 @@ nyoom specifies sources for userchromes in a special format.
 - **GitHub**: `github:<owner>/<repo>[#ref]`
 - **Codeberg**: `codeberg:<owner>/<repo>[#ref]`
 - **GitLab**: `gitlab:<owner>/<repo>[#ref]`
-- **Path** to a directory: `path:<path>`
 - **URL** (to a known archive format of `.zip`, `.tar`, `.tgz`, `.tar.gz`, `.tar.xz`, `.tar.bz2` or `.tar.zst`): `url:<url>` or just `<url>`
+- **Path** to a directory: `path:<path>`
 
 You can add a new userchrome by using the `nyoom add` command:
 

@@ -8,7 +8,6 @@
   rustPlatform,
   installShellFiles,
   nix-filter,
-  pkg-config,
   self,
   enableLTO ? true,
   enableOptimizeSize ? false,
@@ -26,7 +25,6 @@ rustPlatform.buildRustPackage rec {
     root = self;
     include = [
       "src"
-      "presets"
       "Cargo.lock"
       "Cargo.toml"
     ];
@@ -36,13 +34,9 @@ rustPlatform.buildRustPackage rec {
     lockFile = ../Cargo.lock;
   };
 
-  nativeBuildInputs =
-    [
-      installShellFiles
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isDarwin [
-      pkg-config
-    ];
+  nativeBuildInputs = [
+    installShellFiles
+  ];
 
   postInstall = lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
     installShellCompletion --cmd "${pname}" \

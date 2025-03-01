@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::config::get_default_config_path;
-use clap::{Parser, Subcommand, ValueHint};
+use std::path::PathBuf;
 
+use clap::{Parser, Subcommand, ValueHint};
 use enum_dispatch::enum_dispatch;
 use eyre::Result;
-use std::path::PathBuf;
+
+use crate::config::get_default_config_path;
 
 mod add;
 mod completions;
@@ -28,6 +29,10 @@ pub struct Cli {
     /// Config file to use
     #[arg(short, long, default_value_os_t = get_default_config_path().unwrap(), value_hint = ValueHint::FilePath)]
     config: PathBuf,
+
+    /// Skip checking whether Firefox is running
+    #[arg(long = "dangerous-no-running-check")]
+    no_running_check: bool,
 }
 
 #[enum_dispatch]
@@ -50,7 +55,7 @@ pub enum Commands {
     Update(update::UpdateCommand),
     /// Import a preset as a userchrome or list presets
     Preset(preset::PresetCommand),
-    /// Configure Firefox profile or get current directory
+    /// Configure Firefox profile or get current configured profile
     Profile(profile::ProfileCommand),
     /// Manage userchrome-linked configs
     Config(config::ConfigCommand),

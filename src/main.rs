@@ -9,6 +9,7 @@ use eyre::Result;
 mod cmd;
 mod config;
 mod presets;
+mod source;
 mod switch;
 mod utils;
 

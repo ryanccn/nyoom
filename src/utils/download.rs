@@ -7,10 +7,11 @@ use std::{
     path::Path,
 };
 use tokio::fs;
-use tokio_stream::{wrappers::ReadDirStream, StreamExt as _};
+use tokio_stream::StreamExt as _;
 
-use anstream::{eprint, stderr};
+use anstream::{eprint, eprintln, stderr};
 use crossterm::{cursor, terminal, ExecutableCommand as _};
+use eyre::{bail, eyre, Result};
 use owo_colors::OwoColorize as _;
 use temp_dir::TempDir;
 
@@ -20,30 +21,33 @@ use xz2::bufread::XzDecoder;
 use zip::ZipArchive;
 use zstd::stream::Decoder as ZstdDecoder;
 
-use eyre::{bail, eyre, Result};
+use url::Url;
 
 async fn strip_root(dir: &Path) -> Result<()> {
-    let entries = ReadDirStream::new(fs::read_dir(dir).await?)
-        .collect::<Result<Vec<_>, _>>()
-        .await?;
+    let mut entries = fs::read_dir(dir).await?;
 
-    if entries.len() == 1 && entries[0].path().is_dir() {
-        let subdirectory = entries[0].path();
+    let first = entries.next_entry().await?;
+    let only_entry = entries.next_entry().await?.is_none();
 
-        let mut sub_entries = fs::read_dir(&subdirectory).await?;
-        while let Ok(Some(entry)) = sub_entries.next_entry().await {
-            let target_path = dir.join(entry.file_name());
-            fs::rename(entry.path(), &target_path).await?;
+    if let Some(first) = first {
+        if only_entry && first.path().is_dir() {
+            let subdirectory = first.path();
+
+            let mut sub_entries = fs::read_dir(&subdirectory).await?;
+            while let Some(from) = sub_entries.next_entry().await? {
+                let to = dir.join(from.file_name());
+                fs::rename(from.path(), &to).await?;
+            }
+
+            fs::remove_dir(subdirectory).await?;
         }
-
-        fs::remove_dir(subdirectory).await?;
     }
 
     Ok(())
 }
 
-pub async fn archive(url: &str, target_dir: &Path) -> Result<()> {
-    let ext = Path::new(url)
+pub async fn archive(url: &Url, target: &Path) -> Result<()> {
+    let ext = Path::new(url.path())
         .extension()
         .and_then(|s| s.to_str())
         .ok_or_else(|| eyre!("could not infer file extension"))?;
@@ -52,7 +56,11 @@ pub async fn archive(url: &str, target_dir: &Path) -> Result<()> {
 
     stderr().execute(cursor::SavePosition)?;
 
-    let mut resp = reqwest::get(url).await?.error_for_status()?.bytes_stream();
+    let mut resp = reqwest::get(url.to_owned())
+        .await?
+        .error_for_status()?
+        .bytes_stream();
+
     let mut data: Vec<u8> = Vec::new();
 
     while let Some(chunk) = resp.next().await {
@@ -127,7 +135,7 @@ pub async fn archive(url: &str, target_dir: &Path) -> Result<()> {
     }
 
     strip_root(temp_extract_path).await?;
-    super::copy_dir_all(temp_extract_path, target_dir).await?;
+    super::copy_dir_all(temp_extract_path, target).await?;
 
     fs::remove_dir_all(temp_extract_path).await?;
 

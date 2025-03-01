@@ -10,7 +10,7 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 use async_recursion::async_recursion;
 use eyre::Result;
 
-use anstream::println;
+use anstream::eprintln;
 use owo_colors::OwoColorize as _;
 
 pub mod download;
@@ -39,7 +39,7 @@ pub fn check_firefox() {
     let is_running = system.processes_by_name(&OsString::from("firefox")).count() != 0;
 
     if is_running {
-        println!("{}", "Firefox is running, refusing to continue!".yellow());
+        eprintln!("{}", "Firefox is running, refusing to continue!".yellow());
         exit(1);
     }
 }

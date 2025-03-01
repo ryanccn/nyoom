@@ -11,27 +11,27 @@ use anstream::println;
 use owo_colors::OwoColorize as _;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UserchromeConfig {
     pub key: String,
     pub value: String,
     pub raw: bool,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Userchrome {
     pub name: String,
     pub source: String,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub configs: Vec<UserchromeConfig>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Config {
     pub profile: Option<PathBuf>,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub userchromes: Vec<Userchrome>,
 }
 
@@ -50,7 +50,7 @@ pub fn get_default_config_path() -> Result<PathBuf> {
 
 pub async fn get_config(path: &Path) -> Result<Config> {
     match fs::read_to_string(path).await {
-        Ok(s) => toml::from_str(&s).map_err(Into::into),
+        Ok(s) => toml::from_str(&s).map_err(|e| e.into()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
         Err(e) => Err(e.into()),
     }

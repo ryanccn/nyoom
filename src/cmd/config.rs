@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use anstream::println;
 use clap::{Parser, Subcommand};
 use eyre::{eyre, Result};
 
@@ -28,7 +29,7 @@ enum ConfigSubcommands {
         value: String,
 
         #[arg(short, long)]
-        /// Whether the value is raw or a string
+        /// Whether the value is a raw value or a string
         raw: bool,
     },
 
@@ -75,8 +76,8 @@ impl super::Command for ConfigCommand {
                 let existing = chrome.configs.iter_mut().find(|c| c.key == *key);
 
                 if let Some(existing) = existing {
-                    existing.value = value.to_string();
-                    existing.raw = *raw;
+                    existing.value.clone_from(value);
+                    existing.raw.clone_from(raw);
                 } else {
                     chrome.configs.push(config::UserchromeConfig {
                         key: key.clone(),
@@ -98,11 +99,7 @@ impl super::Command for ConfigCommand {
                     .find(|d| &d.name == name)
                     .ok_or_else(|| eyre!("no userchrome with name {:?} exists", name))?;
 
-                let existing = chrome.configs.iter().position(|c| c.key == *key);
-
-                if let Some(existing) = existing {
-                    chrome.configs.remove(existing);
-                }
+                chrome.configs.retain(|c| c.key != *key);
 
                 config::set_config(&global_options.config, &config).await?;
 

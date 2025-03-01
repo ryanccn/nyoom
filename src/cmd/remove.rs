@@ -9,7 +9,7 @@ use crate::config;
 
 #[derive(Parser)]
 pub struct RemoveCommand {
-    /// Name of the userchrome
+    /// Name of the userchrome to remove
     name: String,
 }
 
@@ -23,18 +23,17 @@ impl super::Command for RemoveCommand {
             .enumerate()
             .find(|(_, uchrome)| uchrome.name == self.name);
 
-        match res {
-            Some((i, uchrome)) => {
-                config::print_userchrome(uchrome, true, &config::PrintContext::Removed);
+        if let Some((i, uchrome)) = res {
+            config::print_userchrome(uchrome, true, &config::PrintContext::Removed);
 
-                config.userchromes.remove(i);
-                config::set_config(&global_options.config, &config).await?;
-                Ok(())
-            }
-            None => Err(eyre!(
+            config.userchromes.remove(i);
+            config::set_config(&global_options.config, &config).await?;
+            Ok(())
+        } else {
+            Err(eyre!(
                 "no userchrome with name {:?} found to remove!",
                 self.name
-            )),
+            ))
         }
     }
 }
