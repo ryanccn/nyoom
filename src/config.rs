@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use etcetera::AppStrategy as _;
-use eyre::{eyre, Result};
+use eyre::{Result, eyre};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 

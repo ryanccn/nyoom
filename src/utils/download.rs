@@ -10,8 +10,8 @@ use tokio::fs;
 use tokio_stream::StreamExt as _;
 
 use anstream::{eprint, eprintln, stderr};
-use crossterm::{cursor, terminal, ExecutableCommand as _};
-use eyre::{bail, eyre, Result};
+use crossterm::{ExecutableCommand as _, cursor, terminal};
+use eyre::{Result, bail, eyre};
 use owo_colors::OwoColorize as _;
 use temp_dir::TempDir;
 

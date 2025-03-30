@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use eyre::{bail, Result};
+use eyre::{Result, bail};
 use temp_dir::TempDir;
 
 use std::{io, path::Path, process::Stdio};
@@ -12,7 +12,7 @@ use anstream::println;
 use owo_colors::OwoColorize as _;
 
 use crate::{
-    config::{print_userchrome, PrintContext, Userchrome, UserchromeConfig},
+    config::{PrintContext, Userchrome, UserchromeConfig, print_userchrome},
     source::ParsedSource,
     utils,
 };

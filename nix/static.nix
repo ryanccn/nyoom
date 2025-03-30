@@ -5,7 +5,6 @@
 {
   lib,
   pkgsCross,
-  nix-filter,
   self,
 }:
 let
@@ -18,7 +17,7 @@ builtins.listToAttrs (
   map (
     pkgs:
     let
-      package = pkgs.callPackage ./package.nix { inherit nix-filter self; };
+      package = pkgs.callPackage ./package.nix { inherit self; };
     in
     lib.nameValuePair (builtins.parseDrvName package.name).name package
   ) crossTargets

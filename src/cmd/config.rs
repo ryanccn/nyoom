@@ -4,7 +4,7 @@
 
 use anstream::println;
 use clap::{Parser, Subcommand};
-use eyre::{eyre, Result};
+use eyre::{Result, eyre};
 
 use crate::config;
 

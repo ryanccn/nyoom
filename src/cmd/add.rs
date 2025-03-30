@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use clap::Parser;
-use eyre::{bail, Result};
+use eyre::{Result, bail};
 
 use crate::{config, source::ParsedSource};
 

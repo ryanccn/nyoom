@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use clap_complete::{generate, Shell};
+use clap_complete::{Shell, generate};
 use std::io::stdout;
 
 use clap::{CommandFactory, Parser};

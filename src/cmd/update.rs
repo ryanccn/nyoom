@@ -5,7 +5,7 @@
 use std::fs;
 
 use clap::Parser;
-use eyre::{bail, Result};
+use eyre::{Result, bail};
 
 use crate::{config, switch, utils};
 

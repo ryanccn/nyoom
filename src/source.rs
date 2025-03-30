@@ -9,7 +9,7 @@ use std::{
     sync::LazyLock,
 };
 
-use eyre::{bail, Result};
+use eyre::{Result, bail};
 use regex::Regex;
 use url::Url;
 

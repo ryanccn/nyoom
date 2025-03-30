@@ -7,14 +7,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nix-filter.url = "github:numtide/nix-filter";
   };
 
   outputs =
     {
       self,
       nixpkgs,
-      nix-filter,
     }:
     let
       inherit (nixpkgs) lib;
@@ -37,17 +35,13 @@
           mkFlakeCheck =
             {
               name,
-              nativeBuildInputs ? [ ],
               command,
-              extraConfig ? { },
-            }:
+              ...
+            }@args:
             pkgs.stdenv.mkDerivation (
               {
                 name = "check-${name}";
                 inherit (self.packages.${system}.nyoom) src;
-                inherit nativeBuildInputs;
-
-                strictDeps = true;
 
                 buildPhase = ''
                   ${command}
@@ -58,66 +52,57 @@
                 dontInstall = true;
                 dontFixup = true;
               }
-              // extraConfig
+              // (removeAttrs args [
+                "name"
+                "command"
+              ])
             );
         in
         {
           nixfmt = mkFlakeCheck {
             name = "nixfmt";
+            command = "find . -name '*.nix' -exec nixfmt --check {} +";
+
+            src = self;
             nativeBuildInputs = with pkgs; [ nixfmt-rfc-style ];
-            command = "nixfmt --check .";
           };
 
           rustfmt = mkFlakeCheck {
             name = "rustfmt";
+            command = "cargo fmt --check";
 
             nativeBuildInputs = with pkgs; [
               cargo
               rustfmt
             ];
-
-            command = "cargo fmt --check";
           };
 
           clippy = mkFlakeCheck {
             name = "clippy";
-
-            nativeBuildInputs =
-              with pkgs;
-              [
-                rustPlatform.cargoSetupHook
-                cargo
-                rustc
-                clippy
-                clippy-sarif
-                sarif-fmt
-              ]
-              ++ lib.optionals stdenv.hostPlatform.isDarwin [
-                pkg-config
-              ];
-
             command = ''
               cargo clippy --all-features --all-targets --tests \
                 --offline --message-format=json \
                 | clippy-sarif | tee $out | sarif-fmt
             '';
 
-            extraConfig = {
-              inherit (self.packages.${system}.nyoom) cargoDeps buildInputs;
-            };
+            nativeBuildInputs = with pkgs; [
+              rustPlatform.cargoSetupHook
+              cargo
+              rustc
+              clippy
+              clippy-sarif
+              sarif-fmt
+            ];
+
+            inherit (self.packages.${system}.nyoom) cargoDeps;
           };
 
           reuse = mkFlakeCheck {
             name = "reuse";
-            extraConfig = {
-              src = self;
-            };
-
-            nativeBuildInputs = with pkgs; [
-              reuse
-            ];
-
             command = "reuse lint";
+
+            src = self;
+            nativeBuildInputs = with pkgs; [ reuse ];
           };
         }
       );
@@ -135,12 +120,6 @@
               rust-analyzer
 
               reuse
-
-              cargo-audit
-              cargo-bloat
-              cargo-expand
-
-              libiconv
             ];
 
             inputsFrom = [ self.packages.${system}.nyoom ];
@@ -166,11 +145,11 @@
       );
 
       legacyPackages = forAllSystems (
-        system: nixpkgsFor.${system}.callPackage ./nix/static.nix { inherit nix-filter self; }
+        system: nixpkgsFor.${system}.callPackage ./nix/static.nix { inherit self; }
       );
 
       overlays.default = _: prev: {
-        nyoom = prev.callPackage ./nix/package.nix { inherit nix-filter self; };
+        nyoom = prev.callPackage ./nix/package.nix { inherit self; };
       };
 
       formatter = forAllSystems (system: nixpkgsFor.${system}.nixfmt-rfc-style);
