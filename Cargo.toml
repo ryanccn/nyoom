@@ -17,7 +17,7 @@ bzip2 = "0.5.2"
 clap = { version = "4.5.34", features = ["derive"] }
 clap_complete = "4.5.47"
 color-eyre = "0.6.3"
-crossterm = "0.28.1"
+crossterm = "0.29.0"
 enum_dispatch = "0.3.13"
 etcetera = "0.10.0"
 eyre = "0.6.12"
