@@ -21,9 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          diagnostic-endpoint: ""
+        uses: cachix/install-nix-action@v31
 
       - name: Check
         run: nix build --fallback --print-build-logs ".#checks.$(nix eval --impure --raw --expr "builtins.currentSystem").clippy"
@@ -42,9 +40,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          diagnostic-endpoint: ""
+        uses: cachix/install-nix-action@v31
 
       - name: Check
         run: nix build --fallback --print-build-logs ".#checks.$(nix eval --impure --raw --expr "builtins.currentSystem").rustfmt"
@@ -57,9 +53,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          diagnostic-endpoint: ""
+        uses: cachix/install-nix-action@v31
 
       - name: Check
         run: nix build --fallback --print-build-logs ".#checks.$(nix eval --impure --raw --expr "builtins.currentSystem").nixfmt"
@@ -72,9 +66,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          diagnostic-endpoint: ""
+        uses: cachix/install-nix-action@v31
 
       - name: Check
         run: nix build --fallback --print-build-logs ".#checks.$(nix eval --impure --raw --expr "builtins.currentSystem").reuse"
