@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use eyre::{Result, bail};
+use eyre::{Result, bail, eyre};
 use temp_dir::TempDir;
 
 use std::{io, path::Path, process::Stdio};
@@ -12,7 +12,7 @@ use anstream::println;
 use owo_colors::OwoColorize as _;
 
 use crate::{
-    config::{PrintContext, Userchrome, UserchromeConfig, print_userchrome},
+    config::{PrintContext, Userchrome, UserchromeConfig},
     source::ParsedSource,
     utils,
 };
@@ -42,7 +42,7 @@ async fn run_arkenfox_script(profile: &Path, name: &str, args: &[&str]) -> Resul
 const START_LINE: &str = "/** nyoom-managed config; do not edit */";
 const END_LINE: &str = "/** end of nyoom-managed config */";
 
-async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>) -> Result<()> {
+async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>, now: &str) -> Result<()> {
     let contents = match fs::read_to_string(f).await {
         Ok(contents) => contents,
         Err(err) => {
@@ -83,6 +83,17 @@ async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>) -> Result<()
         ret_lines.extend(new_lines.iter().map(|s| s.as_str()));
         ret_lines.extend(lines[end_idx..].iter());
     } else {
+        fs::rename(
+            &f,
+            f.with_file_name(format!(
+                "{}.nyoom-{now}.bak",
+                f.file_name()
+                    .ok_or_else(|| eyre!("could not obtain file name"))?
+                    .to_string_lossy()
+            )),
+        )
+        .await?;
+
         ret_lines.clone_from(&lines);
         ret_lines.push(START_LINE);
         ret_lines.extend(new_lines.iter().map(|s| s.as_str()));
@@ -101,12 +112,13 @@ async fn patch_user_file(f: &Path, userchrome: Option<&Userchrome>) -> Result<()
 async fn apply_user_file(
     userchrome: Option<&Userchrome>,
     profile: &Path,
+    now: &str,
     step_counter: &mut i32,
 ) -> Result<()> {
     let arkenfox = profile.join("user-overrides.js").exists();
 
     if arkenfox {
-        patch_user_file(&profile.join("user-overrides.js"), userchrome).await?;
+        patch_user_file(&profile.join("user-overrides.js"), userchrome, now).await?;
 
         println!("{} updating arkenfox", step_counter.green());
         *step_counter += 1;
@@ -114,7 +126,7 @@ async fn apply_user_file(
         run_arkenfox_script(profile, "updater", &["-s"]).await?;
         run_arkenfox_script(profile, "prefsCleaner", &["-s"]).await?;
     } else {
-        patch_user_file(&profile.join("user.js"), userchrome).await?;
+        patch_user_file(&profile.join("user.js"), userchrome, now).await?;
     }
 
     Ok(())
@@ -122,11 +134,12 @@ async fn apply_user_file(
 
 pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<()> {
     if let Some(userchrome) = userchrome {
-        print_userchrome(userchrome, false, &PrintContext::Normal);
+        userchrome.print(false, PrintContext::Normal);
         println!();
     }
 
     let mut step_counter = 1;
+    let now = chrono::Local::now().format("%Y-%m-%d-%H-%M-%S").to_string();
 
     if let Some(userchrome) = userchrome {
         println!("{} retrieving source", step_counter.green());
@@ -145,9 +158,18 @@ pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<(
         step_counter += 1;
 
         let new_chrome_dir = profile.join("chrome");
+        let new_chrome_name_file = new_chrome_dir.join(".nyoom-chrome-name");
 
         if new_chrome_dir.exists() {
-            fs::remove_dir_all(&new_chrome_dir).await?;
+            if new_chrome_name_file.exists() {
+                fs::remove_dir_all(&new_chrome_dir).await?;
+            } else {
+                fs::rename(
+                    &new_chrome_dir,
+                    &profile.join(format!("chrome.nyoom-{now}.bak")),
+                )
+                .await?;
+            }
         }
 
         let src_chrome_dir = if temp_dir.path().join("chrome").exists() {
@@ -157,7 +179,7 @@ pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<(
         };
 
         utils::copy_dir_all(src_chrome_dir, &new_chrome_dir).await?;
-        fs::write(new_chrome_dir.join(".nyoom-chrome-name"), &userchrome.name).await?;
+        fs::write(&new_chrome_name_file, &userchrome.name).await?;
     } else {
         println!("{} removing userchrome", step_counter.green());
         step_counter += 1;
@@ -167,7 +189,7 @@ pub async fn switch(userchrome: Option<&Userchrome>, profile: &Path) -> Result<(
     println!("{} applying user.js", step_counter.green());
     step_counter += 1;
 
-    apply_user_file(userchrome, profile, &mut step_counter).await?;
+    apply_user_file(userchrome, profile, &now, &mut step_counter).await?;
 
     println!("{}", "done!".green());
 

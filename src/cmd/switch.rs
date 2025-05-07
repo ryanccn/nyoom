@@ -15,10 +15,10 @@ pub struct SwitchCommand {
 
 impl super::Command for SwitchCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
-        let config = config::get_config(&global_options.config).await?;
+        let config = config::Config::read(&global_options.config).await?;
 
         if !global_options.no_running_check {
-            utils::check_firefox();
+            utils::check_firefox()?;
         }
 
         if let Some(profile) = &config.profile {
@@ -28,7 +28,7 @@ impl super::Command for SwitchCommand {
                 switch::switch(Some(u), profile).await?;
             } else {
                 bail!("no userchrome with name {:?} found!", self.name);
-            };
+            }
         } else {
             bail!("no profile configured");
         }

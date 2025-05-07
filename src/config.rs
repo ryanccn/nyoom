@@ -2,14 +2,30 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use etcetera::AppStrategy as _;
 use eyre::{Result, eyre};
-use std::path::{Path, PathBuf};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 use tokio::fs;
 
 use anstream::println;
+use etcetera::AppStrategy as _;
 use owo_colors::OwoColorize as _;
 use serde::{Deserialize, Serialize};
+
+fn strategy() -> Result<impl etcetera::AppStrategy> {
+    etcetera::choose_app_strategy(etcetera::AppStrategyArgs {
+        top_level_domain: "dev.ryanccn".to_owned(),
+        author: "Ryan Cao".to_owned(),
+        app_name: "nyoom".to_owned(),
+    })
+    .map_err(|e| e.into())
+}
+
+pub fn get_default_config_path() -> Result<PathBuf> {
+    Ok(strategy()?.config_dir().join("nyoom.toml"))
+}
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UserchromeConfig {
@@ -35,101 +51,99 @@ pub struct Config {
     pub userchromes: Vec<Userchrome>,
 }
 
-fn strategy() -> Result<impl etcetera::AppStrategy> {
-    etcetera::choose_app_strategy(etcetera::AppStrategyArgs {
-        top_level_domain: "dev.ryanccn".to_owned(),
-        author: "Ryan Cao".to_owned(),
-        app_name: "nyoom".to_owned(),
-    })
-    .map_err(|e| e.into())
-}
+impl Config {
+    pub async fn read(path: &Path) -> Result<Self> {
+        match fs::read_to_string(path).await {
+            Ok(s) => toml::from_str(&s).map_err(|e| e.into()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+            Err(e) => Err(e.into()),
+        }
+    }
 
-pub fn get_default_config_path() -> Result<PathBuf> {
-    Ok(strategy()?.config_dir().join("nyoom.toml"))
-}
+    pub async fn write(&self, path: &Path) -> Result<()> {
+        fs::create_dir_all(
+            path.parent()
+                .ok_or_else(|| eyre!("could not obtain parent directory of config"))?,
+        )
+        .await?;
 
-pub async fn get_config(path: &Path) -> Result<Config> {
-    match fs::read_to_string(path).await {
-        Ok(s) => toml::from_str(&s).map_err(|e| e.into()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
-        Err(e) => Err(e.into()),
+        let serialized = toml::to_string_pretty(&self)?;
+        fs::write(path, serialized).await?;
+
+        Ok(())
     }
 }
 
-pub async fn set_config(path: &Path, config: &Config) -> Result<()> {
-    fs::create_dir_all(
-        path.parent()
-            .ok_or_else(|| eyre!("could not obtain parent directory of config"))?,
-    )
-    .await?;
-
-    let serialized = toml::to_string_pretty(&config)?;
-    fs::write(path, serialized).await?;
-
-    Ok(())
+impl fmt::Display for UserchromeConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}: {}{}",
+            self.key.magenta(),
+            self.value,
+            if self.raw {
+                " (raw)".dimmed().to_string()
+            } else {
+                String::new()
+            }
+        )
+    }
 }
 
-pub fn format_userchrome_config(c: &UserchromeConfig) -> String {
-    format!(
-        "{}: {}{}",
-        c.key.magenta(),
-        c.value,
-        if c.raw {
-            " (raw)".dimmed().to_string()
-        } else {
-            String::new()
-        }
-    )
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum PrintContext {
     #[default]
     Normal,
+    Modified,
     Added,
     Removed,
 }
 
-pub fn print_userchrome(userchrome: &Userchrome, short: bool, context: &PrintContext) {
-    match context {
-        PrintContext::Normal => {
-            println!(
-                "{} {} {}",
-                "·".cyan(),
-                userchrome.name.cyan(),
-                userchrome.source.dimmed()
-            );
+impl Userchrome {
+    pub fn print(&self, short: bool, context: PrintContext) {
+        match context {
+            PrintContext::Normal => {
+                println!(
+                    "{} {} {}",
+                    "·".cyan(),
+                    self.name.cyan(),
+                    self.source.dimmed()
+                );
+            }
+            PrintContext::Modified => {
+                println!(
+                    "{} {} {}",
+                    "*".blue(),
+                    self.name.blue(),
+                    self.source.dimmed()
+                );
+            }
+            PrintContext::Added => {
+                println!(
+                    "{} {} {}",
+                    "+".green(),
+                    self.name.green(),
+                    self.source.dimmed()
+                );
+            }
+            PrintContext::Removed => {
+                println!("{} {} {}", "-".red(), self.name.red(), self.source.dimmed());
+            }
         }
-        PrintContext::Added => {
-            println!(
-                "{} {} {}",
-                "+".green(),
-                userchrome.name.green(),
-                userchrome.source.dimmed()
-            );
-        }
-        PrintContext::Removed => {
-            println!(
-                "{} {} {}",
-                "-".red(),
-                userchrome.name.red(),
-                userchrome.source.dimmed()
-            );
-        }
-    }
 
-    for c in if short {
-        &userchrome.configs[..userchrome.configs.len().min(3)]
-    } else {
-        &userchrome.configs
-    } {
-        println!("    {}", format_userchrome_config(c));
-    }
+        for c in if short {
+            &self.configs[..self.configs.len().min(3)]
+        } else {
+            &self.configs
+        } {
+            println!("    {}", c.to_string());
+        }
 
-    if short && userchrome.configs.len() > 3 {
-        println!(
-            "{}",
-            format!("    and {} more", userchrome.configs.len() - 3).dimmed()
-        );
+        if short && self.configs.len() > 3 {
+            println!(
+                "{}",
+                format!("    and {} more", self.configs.len() - 3).dimmed()
+            );
+        }
     }
 }

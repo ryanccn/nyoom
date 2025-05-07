@@ -2,16 +2,13 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::{ffi::OsString, path::Path, process::exit};
+use std::{ffi::OsString, path::Path};
 use tokio::fs;
 
 use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 
 use async_recursion::async_recursion;
-use eyre::Result;
-
-use anstream::eprintln;
-use owo_colors::OwoColorize as _;
+use eyre::{Result, bail};
 
 pub mod download;
 
@@ -32,14 +29,14 @@ pub async fn copy_dir_all(src: &Path, dst: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn check_firefox() {
+pub fn check_firefox() -> Result<()> {
     let system = System::new_with_specifics(
         RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing()),
     );
-    let is_running = system.processes_by_name(&OsString::from("firefox")).count() != 0;
 
-    if is_running {
-        eprintln!("{}", "Firefox is running, refusing to continue!".yellow());
-        exit(1);
+    if system.processes_by_name(&OsString::from("firefox")).count() > 0 {
+        bail!("Firefox is running, refusing to continue!");
     }
+
+    Ok(())
 }

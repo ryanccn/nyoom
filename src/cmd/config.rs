@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use anstream::println;
 use clap::{Parser, Subcommand};
 use eyre::{Result, eyre};
 
@@ -46,16 +45,15 @@ impl super::Command for ConfigCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         match &self.command {
             ConfigSubcommands::List { name } => {
-                let config = config::get_config(&global_options.config).await?;
-                let uc = config
+                let config = config::Config::read(&global_options.config).await?;
+
+                let chrome = config
                     .userchromes
                     .iter()
                     .find(|d| &d.name == name)
                     .ok_or_else(|| eyre!("no userchrome with name {:?} exists", name))?;
 
-                for c in &uc.configs {
-                    println!("{}", config::format_userchrome_config(c));
-                }
+                chrome.print(false, config::PrintContext::Normal);
 
                 Ok(())
             }
@@ -66,7 +64,8 @@ impl super::Command for ConfigCommand {
                 value,
                 raw,
             } => {
-                let mut config = config::get_config(&global_options.config).await?;
+                let mut config = config::Config::read(&global_options.config).await?;
+
                 let chrome = config
                     .userchromes
                     .iter_mut()
@@ -86,13 +85,15 @@ impl super::Command for ConfigCommand {
                     });
                 }
 
-                config::set_config(&global_options.config, &config).await?;
+                chrome.print(false, config::PrintContext::Modified);
+                config.write(&global_options.config).await?;
 
                 Ok(())
             }
 
             ConfigSubcommands::Unset { name, key } => {
-                let mut config = config::get_config(&global_options.config).await?;
+                let mut config = config::Config::read(&global_options.config).await?;
+
                 let chrome = config
                     .userchromes
                     .iter_mut()
@@ -101,7 +102,8 @@ impl super::Command for ConfigCommand {
 
                 chrome.configs.retain(|c| c.key != *key);
 
-                config::set_config(&global_options.config, &config).await?;
+                chrome.print(false, config::PrintContext::Modified);
+                config.write(&global_options.config).await?;
 
                 Ok(())
             }

@@ -10,6 +10,7 @@ use tokio::fs;
 use tokio_stream::StreamExt as _;
 
 use anstream::{eprint, eprintln, stderr};
+use bytesize::ByteSize;
 use crossterm::{ExecutableCommand as _, cursor, terminal};
 use eyre::{Result, bail, eyre};
 use owo_colors::OwoColorize as _;
@@ -72,7 +73,9 @@ pub async fn archive(url: &Url, target: &Path) -> Result<()> {
 
         eprint!(
             "{}",
-            humansize::format_size(data.len(), humansize::DECIMAL)
+            ByteSize::b(data.len() as u64)
+                .display()
+                .si()
                 .cyan()
                 .dimmed(),
         );
@@ -84,7 +87,9 @@ pub async fn archive(url: &Url, target: &Path) -> Result<()> {
 
     eprintln!(
         "{}",
-        humansize::format_size(data.len(), humansize::DECIMAL)
+        ByteSize::b(data.len() as u64)
+            .display()
+            .si()
             .green()
             .dimmed(),
     );

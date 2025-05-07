@@ -20,7 +20,7 @@ pub struct ProfileCommand {
 
 impl super::Command for ProfileCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
-        let mut config = config::get_config(&global_options.config).await?;
+        let mut config = config::Config::read(&global_options.config).await?;
 
         if let Some(path) = &self.path {
             if !path.is_dir() {
@@ -28,7 +28,7 @@ impl super::Command for ProfileCommand {
             }
 
             config.profile = Some(path.canonicalize()?);
-            config::set_config(&global_options.config, &config).await?;
+            config.write(&global_options.config).await?;
         }
 
         println!(

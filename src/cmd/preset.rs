@@ -16,9 +16,9 @@ pub struct PresetCommand {
 impl super::Command for PresetCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
         if let Some(name) = &self.name {
-            let mut config = config::get_config(&global_options.config).await?;
+            let mut config = config::Config::read(&global_options.config).await?;
 
-            if config.userchromes.iter().any(|uc| &uc.name == name) {
+            if config.userchromes.iter().any(|c| &c.name == name) {
                 bail!("the userchrome {:?} already exists!", self.name);
             }
 
@@ -27,13 +27,13 @@ impl super::Command for PresetCommand {
                 .find(|p| &p.name == name)
                 .ok_or_else(|| eyre!("no preset named {:?} exists!", name))?;
 
-            config::print_userchrome(preset, false, &config::PrintContext::Added);
+            preset.print(false, config::PrintContext::Added);
             config.userchromes.push(preset.to_owned());
 
-            config::set_config(&global_options.config, &config).await?;
+            config.write(&global_options.config).await?;
         } else {
             for p in PRESETS.iter() {
-                config::print_userchrome(p, true, &config::PrintContext::Normal);
+                p.print(true, config::PrintContext::Normal);
             }
         }
 

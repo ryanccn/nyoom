@@ -17,9 +17,9 @@ pub struct AddCommand {
 
 impl super::Command for AddCommand {
     async fn action(&self, global_options: &super::Cli) -> Result<()> {
-        let mut config = config::get_config(&global_options.config).await?;
+        let mut config = config::Config::read(&global_options.config).await?;
 
-        if config.userchromes.iter().any(|uc| uc.name == self.name) {
+        if config.userchromes.iter().any(|c| c.name == self.name) {
             bail!("the userchrome {:?} already exists!", self.name);
         }
 
@@ -35,10 +35,10 @@ impl super::Command for AddCommand {
             configs: Vec::new(),
         };
 
-        config::print_userchrome(&new_userchrome, false, &config::PrintContext::Added);
+        new_userchrome.print(false, config::PrintContext::Added);
         config.userchromes.push(new_userchrome);
 
-        config::set_config(&global_options.config, &config).await?;
+        config.write(&global_options.config).await?;
 
         Ok(())
     }
