@@ -1268,7 +1268,7 @@ dependencies = [
 
 [[package]]
 name = "nyoom"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "anstream",
  "async-recursion",
