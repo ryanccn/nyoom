@@ -16,7 +16,7 @@ async-recursion = "1.1.1"
 bytesize = "2.0.1"
 bzip2 = "0.5.2"
 chrono = "0.4.41"
-clap = { version = "4.5.37", features = ["derive"] }
+clap = { version = "4.5.45", features = ["derive"] }
 clap_complete = "4.5.50"
 color-eyre = { version = "0.6.4", default-features = false }
 crossterm = "0.29.0"
