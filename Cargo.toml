@@ -36,7 +36,7 @@ tokio-stream = { version = "0.1.17", features = ["full"] }
 toml = "0.8.22"
 url = "2.5.4"
 xz2 = "0.1.7"
-zip = "2.6.1"
+zip = "5.1.1"
 zstd = "0.13.3"
 
 [lints.clippy]
