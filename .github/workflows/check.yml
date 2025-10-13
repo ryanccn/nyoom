@@ -27,7 +27,7 @@ jobs:
         run: nix build --fallback --print-build-logs ".#checks.$(nix eval --impure --raw --expr "builtins.currentSystem").clippy"
 
       - name: Upload analysis results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: result
           wait-for-processing: true
