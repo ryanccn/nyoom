@@ -14,6 +14,8 @@ jobs:
       id-token: write
       attestations: write
     uses: ./.github/workflows/build.yml
+    with:
+      disable-cache: true
 
   github:
     name: GitHub Releases
@@ -26,11 +28,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download artifacts
         id: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
         with:
           path: /tmp/artifacts
 
