@@ -28,7 +28,7 @@ owo-colors = "4.2.3"
 regex = "1.12.3"
 reqwest = { version = "0.12.26", features = ["charset", "http2", "macos-system-configuration", "rustls-tls", "stream", "brotli", "zstd", "gzip"], default-features = false }
 serde = { version = "1.0.228", features = ["derive"] }
-sysinfo = { version = "0.37.2", features = ["system"], default-features = false }
+sysinfo = { version = "0.38.2", features = ["system"], default-features = false }
 tar = "0.4.44"
 temp-dir = "0.1.16"
 tokio = { version = "1.49.0", features = ["full"] }
